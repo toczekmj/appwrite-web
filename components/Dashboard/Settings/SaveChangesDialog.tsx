@@ -1,7 +1,6 @@
 import {useAuth} from "@/components/Auth/AuthContext";
 import {AlertDialog, Button, Inset, Table, Text, TextField} from "@radix-ui/themes";
 import {Models} from "appwrite";
-import {useRouter} from "next/navigation";
 import React from "react";
 
 interface SaveChangesDialogProps {
