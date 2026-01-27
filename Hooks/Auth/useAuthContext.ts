@@ -129,10 +129,15 @@ export default function useAuthContext() {
             .catch(() => setCurrent(null))
             .finally(() => setLoading(false));
 
-        // getUser()
-        //     .then(setCurrentUserInfo)
-        //     .catch(() => setCurrentUserInfo(null))
-        //     .finally(() => setLoading(false));
+        getUser()
+            .then(setCurrentUserInfo)
+            .catch((e) => {
+                console.warn("ERROR IN getUser() in useAuthContext useEffect()");
+                console.error(e);
+                console.error(e.message);
+                setCurrentUserInfo(null)
+            })
+            .finally(() => setLoading(false));
 
     }, []);
 

@@ -1,6 +1,7 @@
 'use client'
 
 import {useAuth} from '@/components/Auth/AuthContext'
+import {AppwriteException} from "appwrite";
 import React, {useState} from "react";
 
 export default function useLoginPage() {
@@ -19,6 +20,7 @@ export default function useLoginPage() {
             );
         }
         catch (error) {
+            console.warn("ERROR IN useLoginPage");
             console.error(error);
             // TODO: display toaster when error
         }
