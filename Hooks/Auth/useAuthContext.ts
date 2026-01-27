@@ -29,7 +29,9 @@ export default function useAuthContext() {
     const login = async (email: string, password: string): Promise<void> => {
         const session = await account.createEmailPasswordSession({ email, password });
         setCurrent(session);
-        //setCurrentUserInfo(await getUser());
+        console.log("Called login() - session created - current set, now settings userinfo")
+        setCurrentUserInfo(await getUser());
+        console.log("userInfo set - redirecting to dashboard")
         router.push('/dashboard');
     }
 
@@ -119,6 +121,7 @@ export default function useAuthContext() {
     };
 
     const getUser = async (): Promise<Models.User | null> => {
+        console.log("getUser called in useAuthContext in getUser() function")
         return await account.get();
     }
 
