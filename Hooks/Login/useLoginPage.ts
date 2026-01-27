@@ -1,3 +1,5 @@
+'use client'
+
 import {useAuth} from '@/components/Auth/AuthContext'
 import React, {useState} from "react";
 
@@ -17,6 +19,7 @@ export default function useLoginPage() {
             );
         }
         catch (error) {
+            console.error(error);
             // TODO: display toaster when error
         }
         finally {

@@ -1,3 +1,5 @@
+'use client'
+
 import {Form} from "@radix-ui/react-form";
 import {Button, TextField} from "@radix-ui/themes";
 import {Mail, ScanEyeIcon} from "lucide-react";
