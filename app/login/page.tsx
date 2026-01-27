@@ -4,7 +4,6 @@ import AuthForm from "@/components/Auth/AuthForm";
 import useLoginPage from "@/Hooks/Login/useLoginPage";
 import {Box, Button, Flex, Text} from "@radix-ui/themes";
 
-
 export default function LoginPage() {
 
     const {

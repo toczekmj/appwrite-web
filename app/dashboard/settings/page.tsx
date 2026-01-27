@@ -1,9 +1,9 @@
 'use client'
+
 import PropertyUpdateCard from "@/components/Dashboard/Settings/PropertyUpdateCard";
 import SaveChangesDialog from "@/components/Dashboard/Settings/SaveChangesDialog";
 import {useDashboardSettings} from "@/Hooks/Settings/useDashboardSettings";
 import {Card} from "@radix-ui/themes";
-
 
 export default function DashboardSettings() {
     const {
