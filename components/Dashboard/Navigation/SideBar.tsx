@@ -17,7 +17,7 @@ export default function Sidebar() {
     }
 
     return (
-        <div className="flex flex-col gap-5 m-3 py-3 px-8 rounded-4xl w-fit"
+        <div className="flex flex-col gap-5 my-3 py-3 px-8 rounded-4xl w-fit"
              style={{backgroundColor: 'var(--gray-3)'}}>
             <MainNav isActive={isParentActive} size={"5"} />
             {
