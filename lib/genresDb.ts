@@ -1,7 +1,7 @@
 import {tablesDb} from "@/lib/appwrite";
 import {ID, Query} from "appwrite";
 
-export enum GenreColumns {
+export enum FolderColumns {
     "ID" = "$id",
     "CreatedAt" = "$createdAt",
     "UpdatedAt" = "$updatedAt",
@@ -10,15 +10,16 @@ export enum GenreColumns {
     "Samples" = "samples",
 }
 
-
+// TODO: fetch dbid and tableid from .env
+// TODO: add error handling
 
 export async function GetFolders(){
     const result = await tablesDb.listRows({
         databaseId: "697a22dd0016001f7e6b",
         tableId: "genres",
         queries: [
-            Query.select([GenreColumns.ReadableName, GenreColumns.Slug]),
-            Query.orderDesc(GenreColumns.UpdatedAt),
+            Query.select([FolderColumns.ReadableName, FolderColumns.Slug]),
+            Query.orderDesc(FolderColumns.UpdatedAt),
         ],
     });
 
@@ -55,5 +56,17 @@ export async function CreateFolder(folderName: string) {
             "ReadableName": folderName,
             "Slug": folderName + "-slug",
         }
+        // TODO: create function that creates slug out of folder name
     });
+}
+
+export async function UpdateFolder(folderId: string, folderName: string) {
+    return await tablesDb.updateRow({
+        databaseId: "697a22dd0016001f7e6b",
+        tableId: "genres",
+        rowId: folderId,
+        data: {
+            "ReadableName": folderName,
+        }
+    })
 }

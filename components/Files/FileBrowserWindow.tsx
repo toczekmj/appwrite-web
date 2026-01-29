@@ -1,8 +1,8 @@
 'use client'
 
 import {Card} from "@radix-ui/themes";
-import FolderBrowser from "@/components/Files/FolderBrowser";
-import FileBrowser from "@/components/Files/FileBrowser";
+import FolderBrowser from "@/components/Files/FolderBrowser/FolderBrowser";
+import FileBrowser from "@/components/Files/FileBrowser/FileBrowser";
 import {Models} from "appwrite";
 import React from "react";
 import {FolderUpdateEvent} from "@/app/Enums/FolderUpdateEvent";

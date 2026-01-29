@@ -2,6 +2,7 @@ import {Card, Separator, Text} from "@radix-ui/themes";
 import {Models} from "appwrite";
 import {useEffect, useState} from "react";
 import {GetFiles} from "@/lib/genresDb";
+import UploadFilesDialog from "@/components/Files/FileBrowser/Dialogs/UploadFilesDialog";
 
 
 interface FileBrowserProps {
@@ -20,16 +21,14 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
         const fetchFiles = async () => {
             setLoading(true);
             try {
-                if (folderId){
+                if (folderId) {
                     const result = await GetFiles(folderId)
                     setFiles(result);
                 }
-            }
-            catch (error){
+            } catch (error) {
                 console.log(error);
                 setFiles([]);
-            }
-            finally {
+            } finally {
                 setLoading(false);
             }
         };
@@ -41,7 +40,15 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
     return (
         <Card>
             <div className={"flex flex-col min-w-100 gap-1"}>
-                <Text size={"5"}>Files</Text>
+                <div className={"flex flex-row justify-between items-center"}>
+                    <Text size={"5"}>Files</Text>
+                    {
+                        folderId ? (
+                            <UploadFilesDialog folderId={folderId}/>
+                        ) : <></>
+                    }
+                </div>
+
                 <Separator size={"4"}/>
                 {
                     !folderId ? (
@@ -54,7 +61,7 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
                                 {
                                     files.map((file, index) => {
                                         return (
-                                            <Text key={index} size={"3"}>{file["Name"]}</Text>
+                                            <Text key={index} size={"3"}>{file["FileId"]}</Text>
                                         )
                                     })
                                 }
