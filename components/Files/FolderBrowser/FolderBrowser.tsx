@@ -7,6 +7,7 @@ import {Button, Card, Separator, Text} from "@radix-ui/themes";
 import {FolderUpdateEvent} from "@/app/Enums/FolderUpdateEvent";
 import CreateFolderDialog from "@/components/Files/FolderBrowser/Dialogs/CreateFolderDialog";
 import EditFolderDialog from "@/components/Files/FolderBrowser/Dialogs/EditFolderDialog";
+import {useAuth} from "@/components/Auth/AuthContext";
 
 interface FolderBrowserProps {
     folders: Models.DefaultRow[] | null;
@@ -15,6 +16,8 @@ interface FolderBrowserProps {
 }
 
 export default function FolderBrowser({folders, selectedFolder, onFolderSelect} : FolderBrowserProps) {
+    const {currentUserInfo} = useAuth();
+
     const isSelectedFolder = (id: string) => {
         return selectedFolder === id;
     }
@@ -33,7 +36,7 @@ export default function FolderBrowser({folders, selectedFolder, onFolderSelect} 
             return;
         }
 
-        const result = await CreateFolder(name);
+        const result = await CreateFolder(name, currentUserInfo?.$id ?? "");
         folders?.push(result);
         onFolderSelect(FolderUpdateEvent.Select, result[FolderColumns.ID]);
     }

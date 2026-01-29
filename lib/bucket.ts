@@ -22,13 +22,15 @@ export function CreateFile(
         onProgress: onProgress,
         permissions: [
             Permission.read(Role.user(userId)),
-            Permission.write(Role.user(userId))
+            Permission.write(Role.user(userId)),
+            Permission.delete(Role.user(userId)),
         ]
     });
 }
 
-export async function ListFiles() {
-    return await storage.listFiles({
+export async function DeleteFileFromBucket(fileId: string){
+    await storage.deleteFile({
         bucketId: bucketId,
-    });
+        fileId: fileId,
+    })
 }

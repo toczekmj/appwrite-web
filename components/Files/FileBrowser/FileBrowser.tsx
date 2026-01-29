@@ -1,8 +1,9 @@
 import {Card, Separator, Text} from "@radix-ui/themes";
 import {Models} from "appwrite";
 import {useEffect, useState} from "react";
-import {GetFiles} from "@/lib/genresDb";
+import {GetFileNamesInFolder} from "@/lib/genresDb";
 import UploadFilesDialog from "@/components/Files/FileBrowser/Dialogs/UploadFilesDialog";
+import File from "@/components/Files/FileBrowser/File";
 
 
 interface FileBrowserProps {
@@ -13,29 +14,31 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
     const [files, setFiles] = useState<Models.DefaultRow[]>([]);
     const [loading, setLoading] = useState(false);
 
+    const fetchFiles = async () => {
+        setLoading(true);
+        try {
+            if (folderId) {
+                const result = await GetFileNamesInFolder(folderId)
+                setFiles(result);
+            }
+        } catch (error) {
+            console.log(error);
+            setFiles([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         if (!folderId) {
             setFiles([]);
         }
-
-        const fetchFiles = async () => {
-            setLoading(true);
-            try {
-                if (folderId) {
-                    const result = await GetFiles(folderId)
-                    setFiles(result);
-                }
-            } catch (error) {
-                console.log(error);
-                setFiles([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchFiles();
-
     }, [folderId]);
+
+    const handleUploadComplete = () => {
+        fetchFiles();
+    }
 
     return (
         <Card>
@@ -44,7 +47,7 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
                     <Text size={"5"}>Files</Text>
                     {
                         folderId ? (
-                            <UploadFilesDialog folderId={folderId}/>
+                            <UploadFilesDialog onClose={handleUploadComplete} folderId={folderId}/>
                         ) : <></>
                     }
                 </div>
@@ -61,7 +64,7 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
                                 {
                                     files.map((file, index) => {
                                         return (
-                                            <Text key={index} size={"3"}>{file["FileId"]}</Text>
+                                            <File key={index} name={file["FileName"]} id={file.$id}/>
                                         )
                                     })
                                 }

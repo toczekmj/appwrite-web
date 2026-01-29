@@ -1,5 +1,7 @@
 import {tablesDb} from "@/lib/appwrite";
-import {ID, Query} from "appwrite";
+import {ID, Permission, Query, Role} from "appwrite";
+import {createFileSlug} from "@/lib/slugify";
+import {DeleteFileFromBucket} from "@/lib/bucket";
 
 export enum FolderColumns {
     "ID" = "$id",
@@ -10,12 +12,14 @@ export enum FolderColumns {
     "Samples" = "samples",
 }
 
+const dbId = "697a22dd0016001f7e6b"
+
 // TODO: fetch dbid and tableid from .env
 // TODO: add error handling
 
 export async function GetFolders(){
     const result = await tablesDb.listRows({
-        databaseId: "697a22dd0016001f7e6b",
+        databaseId: dbId,
         tableId: "genres",
         queries: [
             Query.select([FolderColumns.ReadableName, FolderColumns.Slug]),
@@ -26,13 +30,13 @@ export async function GetFolders(){
     return result.rows;
 }
 
-export async function GetFiles(folderId: string)
+export async function GetFileNamesInFolder(folderId: string)
 {
     const result = await tablesDb.listRows({
-        databaseId: "697a22dd0016001f7e6b",
+        databaseId: dbId,
         tableId: "files",
         queries: [
-            Query.equal("genre", folderId),
+            Query.equal("genre", folderId)
         ]
     })
 
@@ -40,33 +44,63 @@ export async function GetFiles(folderId: string)
 }
 
 export async function DeleteFolder(folderId: string) {
+    const files = await GetFileNamesInFolder(folderId);
+
+    for (const file of files) {
+        await DeleteFileFromBucket(file["FileId"])
+    }
+
     await tablesDb.deleteRow({
-        databaseId: "697a22dd0016001f7e6b",
+        databaseId: dbId,
         tableId: "genres",
         rowId: folderId,
     })
 }
 
-export async function CreateFolder(folderName: string) {
+export async function CreateFolder(folderName: string, userId: string) {
     return await tablesDb.createRow({
         rowId: ID.unique(),
-        databaseId: "697a22dd0016001f7e6b",
+        databaseId: dbId,
         tableId: "genres",
         data: {
             "ReadableName": folderName,
-            "Slug": folderName + "-slug",
-        }
-        // TODO: create function that creates slug out of folder name
+            "Slug": createFileSlug(folderName, userId),
+        },
+        permissions: [
+            Permission.read(Role.user(userId)),
+            Permission.write(Role.user(userId)),
+            Permission.delete(Role.user(userId)),
+        ]
     });
 }
 
 export async function UpdateFolder(folderId: string, folderName: string) {
     return await tablesDb.updateRow({
-        databaseId: "697a22dd0016001f7e6b",
+        databaseId: dbId,
         tableId: "genres",
         rowId: folderId,
         data: {
             "ReadableName": folderName,
         }
+    })
+}
+
+export async function LinkFileToFolder(folderId: string, fileId: string, fileName: string, userId: string){
+    console.log("Folder id " + folderId);
+    console.log("File id " + fileId);
+    return await tablesDb.createRow({
+        data: {
+            "FileId": fileId,
+            "FileName": fileName,
+            "genre": folderId,
+        },
+        databaseId: dbId,
+        rowId: ID.unique(),
+        tableId: "files",
+        permissions: [
+            Permission.read(Role.user(userId)),
+            Permission.write(Role.user(userId)),
+            Permission.delete(Role.user(userId))
+        ]
     })
 }
