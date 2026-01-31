@@ -4,9 +4,12 @@ import {usePathname} from "next/navigation";
 import MainNav from "@/components/Dashboard/Navigation/MainNav";
 import SubNav from "@/components/Dashboard/Navigation/SubNav";
 import {Pages} from "@/app/Enums/Pages";
+import {useAuth} from "@/components/Auth/AuthContext";
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const {currentUserInfo} = useAuth();
+
 
     const isParentActive = (parent: Pages) => {
         return pathname.includes(parent);
@@ -16,7 +19,7 @@ export default function Sidebar() {
         return p === pathname;
     }
 
-    return (
+    return currentUserInfo ? (
         <div className="flex flex-col gap-5 my-3 py-3 px-8 rounded-4xl w-fit"
              style={{backgroundColor: 'var(--gray-3)'}}>
             <MainNav isActive={isParentActive} size={"5"} />
@@ -29,5 +32,5 @@ export default function Sidebar() {
             }
 
         </div>
-    );
+    ) : <></>
 }

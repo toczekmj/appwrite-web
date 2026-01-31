@@ -102,7 +102,14 @@ export default function useAuthContext() {
     };
 
     const getUser = async (): Promise<Models.User | null> => {
-        return await account.get();
+        let acc = null;
+        try {
+            acc = await account.get()
+        }
+        catch (error) {
+            console.error("Could not find user", error);
+        }
+        return acc;
     }
 
     useEffect(() => {

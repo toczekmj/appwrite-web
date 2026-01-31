@@ -57,6 +57,34 @@ export async function DeleteFolder(folderId: string) {
     })
 }
 
+export async function DeleteSingleFileFromFolder(fileId: string) {
+    console.log(`Deleting ${fileId}`);
+    const file = await GetSingleFile(fileId);
+    console.log(`Deleting ${file}`);
+    await DeleteFileFromBucket(file["FileId"])
+    await tablesDb.deleteRow({
+        databaseId: dbId,
+        tableId: "files",
+        rowId: fileId,
+    })
+}
+
+export async function GetSingleFile(fileId: string) {
+    const response = await tablesDb.listRows({
+        databaseId: dbId,
+        tableId: "files",
+        queries: [
+            Query.equal("$id", fileId)
+        ]
+    })
+
+    if(response.rows.length > 1){
+        throw new Error("Error - there is more than 1 file with given id");
+    }
+
+    return response.rows[0];
+}
+
 export async function CreateFolder(folderName: string, userId: string) {
     return await tablesDb.createRow({
         rowId: ID.unique(),

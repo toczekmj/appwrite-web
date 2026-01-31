@@ -16,6 +16,7 @@ export default function FolderButton({label, selected, onFolderClick}: FolderBut
                     display: "flex",
                     flexDirection: "row",
                     justifyContent: "space-between",
+                    flexWrap: "nowrap",
                 }}
                 onClick={onFolderClick}
         >

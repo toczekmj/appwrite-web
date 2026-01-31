@@ -42,7 +42,7 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
 
     return (
         <Card>
-            <div className={"flex flex-col min-w-100 gap-1"}>
+            <div className={"flex flex-col min-w-100 gap-1 max-w-4xl"}>
                 <div className={"flex flex-row justify-between items-center"}>
                     <Text size={"5"}>Files</Text>
                     {
@@ -60,7 +60,7 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
                         <Text>Loading...</Text>
                     ) : (
                         <div>
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-1.5">
                                 {
                                     files.map((file, index) => {
                                         return (

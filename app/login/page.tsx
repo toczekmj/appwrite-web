@@ -3,6 +3,9 @@
 import AuthForm from "@/components/Auth/AuthForm";
 import useLoginPage from "@/Hooks/Login/useLoginPage";
 import {Box, Button, Flex, Text} from "@radix-ui/themes";
+import {useAuth} from "@/components/Auth/AuthContext";
+import {useEffect} from "react";
+import {useRouter} from "next/navigation";
 
 export default function LoginPage() {
 
@@ -12,6 +15,14 @@ export default function LoginPage() {
         handleLogin,
         handleRegistration
     } = useLoginPage();
+
+    const router = useRouter();
+    const {current} = useAuth();
+    useEffect(() => {
+        if (current) {
+            router.push("/dashboard");
+        }
+    }, [current, router]);
 
     return (
         <div className="flex flex-col text-center gap-5 w-full h-full justify-center mt-25">

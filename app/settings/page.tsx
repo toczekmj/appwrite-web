@@ -4,8 +4,20 @@ import PropertyUpdateCard from "@/components/Dashboard/Settings/PropertyUpdateCa
 import SaveChangesDialog from "@/components/Dashboard/Settings/SaveChangesDialog";
 import {useDashboardSettings} from "@/Hooks/Settings/useDashboardSettings";
 import {Card} from "@radix-ui/themes";
+import {useAuth} from "@/components/Auth/AuthContext";
+import {useRouter} from "next/navigation";
+import {useEffect} from "react";
 
 export default function DashboardSettings() {
+    const {currentUserInfo} = useAuth();
+    const router = useRouter();
+    useEffect(() => {
+        console.log(currentUserInfo);
+        if (!currentUserInfo) {
+            router.push('/login');
+        }
+    }, [currentUserInfo, router]);
+
     const {
         user,
         name,

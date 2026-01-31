@@ -1,10 +1,9 @@
 'use client'
 import React, {useEffect} from "react";
-import {Container} from "@radix-ui/themes";
 import {useAuth} from "@/components/Auth/AuthContext";
 import {useRouter} from "next/navigation";
 
-export default function FilesLayout({children}: { children: React.ReactNode }) {
+export default function DashboardLayout({children}: {children: React.ReactNode}) {
     const {currentUserInfo} = useAuth();
     const router = useRouter();
     useEffect(() => {
@@ -15,10 +14,8 @@ export default function FilesLayout({children}: { children: React.ReactNode }) {
     }, [currentUserInfo, router]);
 
     return (
-        <main className="drop-shadow-2xl drop-shadow-amber-50/10">
-            <Container>
-                {children}
-            </Container>
-        </main>
-    );
+        <div>
+            {children}
+        </div>
+    )
 }
