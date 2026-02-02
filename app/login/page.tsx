@@ -6,6 +6,7 @@ import {Box, Button, Flex, Text} from "@radix-ui/themes";
 import {useAuth} from "@/components/Auth/AuthContext";
 import {useEffect} from "react";
 import {useRouter} from "next/navigation";
+import {Pages} from "@/Enums/Pages";
 
 export default function LoginPage() {
 
@@ -20,7 +21,7 @@ export default function LoginPage() {
     const {current} = useAuth();
     useEffect(() => {
         if (current) {
-            router.push("/dashboard");
+            router.push(Pages.dashboard);
         }
     }, [current, router]);
 

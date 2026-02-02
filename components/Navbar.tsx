@@ -3,6 +3,7 @@
 import {useAuth} from "@/components/Auth/AuthContext";
 import {Button, Flex, Section, Text} from "@radix-ui/themes";
 import {useRouter} from "next/navigation";
+import {Pages} from "@/Enums/Pages";
 
 export function Navbar() {
     const {current, logout} = useAuth();
@@ -24,7 +25,7 @@ export function Navbar() {
                     ) : (
                         <Button size="4"
                                 variant="solid"
-                                onClick={() => router.push('/login')}>
+                                onClick={() => router.push(Pages.login)}>
                             Login
                         </Button>
                     )

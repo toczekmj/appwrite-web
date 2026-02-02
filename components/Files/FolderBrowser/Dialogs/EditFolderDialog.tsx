@@ -18,7 +18,10 @@ const EditFolderDialog = ({onAction, folderName, disabled}: EditFolderDialogProp
                 <Button disabled={disabled} color={"blue"}>[...]</Button>
             </AlertDialog.Trigger>
             <AlertDialog.Content>
-                <AlertDialog.Title>Edit Folder</AlertDialog.Title>
+                <div className={"flex flex-col mb-5"}>
+                    <AlertDialog.Title>Edit Folder</AlertDialog.Title>
+                    <AlertDialog.Description>Change genre name</AlertDialog.Description>
+                </div>
 
                 <div className={"flex flex-col w-full gap-2"}>
                     <TextField.Root placeholder={folderName}

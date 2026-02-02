@@ -1,7 +1,7 @@
 import {TabNav, Text} from "@radix-ui/themes";
 import Link from "next/link";
 import {Responsive} from "@radix-ui/themes/props";
-import {Pages} from "@/app/Enums/Pages";
+import {Pages} from "@/Enums/Pages";
 
 interface SubNavProps {
     isActive: (p: Pages) => boolean;

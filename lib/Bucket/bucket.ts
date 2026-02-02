@@ -3,7 +3,7 @@ import {ID, Permission, Role} from "appwrite";
 
 const bucketId = "697b3e870011e6d9fb79"
 
-export function CreateFile(
+export function CreateFileInBucket(
     file: File,
     userId: string,
     onProgress?: (progress: {

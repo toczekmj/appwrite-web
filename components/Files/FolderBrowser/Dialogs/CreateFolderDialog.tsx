@@ -15,9 +15,10 @@ const CreateFolderDialog = ({onAction}: CreateFolderDialogProps) => {
                 <Button>[+]</Button>
             </AlertDialog.Trigger>
             <AlertDialog.Content>
-                <AlertDialog.Title>
-                    Create new folder
-                </AlertDialog.Title>
+                <div className={"flex flex-col mb-5"}>
+                    <AlertDialog.Title>Create new folder</AlertDialog.Title>
+                    <AlertDialog.Description>Each folder should be a separate music genre</AlertDialog.Description>
+                </div>
 
                 <div className={"flex flex-col min-w-min gap-2"}>
                     <TextField.Root placeholder={"Create folder..."}

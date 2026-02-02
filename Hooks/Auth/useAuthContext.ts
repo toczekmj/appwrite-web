@@ -4,6 +4,7 @@ import {account} from "@/lib/appwrite";
 import {AppwriteException, ID, Models} from "appwrite"
 import {useRouter} from "next/navigation";
 import {useEffect, useState} from "react";
+import {Pages} from "@/Enums/Pages";
 
 export interface AuthContextType {
     current: Models.Session | null;
@@ -29,7 +30,7 @@ export default function useAuthContext() {
         const session = await account.createEmailPasswordSession({ email, password });
         setCurrent(session);
         setCurrentUserInfo(await getUser());
-        router.push('/dashboard');
+        router.push(Pages.dashboard);
     }
 
     const logout = async (): Promise<void> => {
@@ -42,7 +43,7 @@ export default function useAuthContext() {
             console.error(error);
         }
         finally {
-            router.push('/login');
+            router.push(Pages.login);
         }
     }
 

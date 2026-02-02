@@ -1,9 +1,9 @@
 import {Card, Separator, Text} from "@radix-ui/themes";
 import {Models} from "appwrite";
 import {useEffect, useState} from "react";
-import {DeleteSingleFileFromFolder, GetFileNamesInFolder} from "@/lib/genresDb";
 import UploadFilesDialog from "@/components/Files/FileBrowser/Dialogs/UploadFilesDialog";
 import File from "@/components/Files/FileBrowser/File";
+import {DeleteFile, GetFiles} from "@/lib/Database/Files";
 
 
 interface FileBrowserProps {
@@ -18,7 +18,7 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
         setLoading(true);
         try {
             if (folderId) {
-                const result = await GetFileNamesInFolder(folderId)
+                const result = await GetFiles(folderId)
                 setFiles(result);
             }
         } catch (error) {
@@ -43,7 +43,7 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
 
     const deleteFile = async (id: string) => {
         try {
-            await DeleteSingleFileFromFolder(id);
+            await DeleteFile(id);
             const newFiles = files.filter((f) => f.$id !== id);
             setFiles(newFiles);
         }

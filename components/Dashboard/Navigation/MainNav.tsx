@@ -2,7 +2,7 @@ import {TabNav, Text} from "@radix-ui/themes";
 import Link from "next/link";
 
 import {Responsive} from "@radix-ui/themes/props";
-import {Pages} from "@/app/Enums/Pages";
+import {Pages} from "@/Enums/Pages";
 
 interface MainNavProps {
     isActive: (p: Pages) => boolean;
@@ -13,7 +13,7 @@ export default function MainNav({isActive, size}: MainNavProps) {
     return (
         <TabNav.Root>
             <TabNav.Link asChild active={isActive(Pages.dashboard)}>
-                <Link href="/dashboard">
+                <Link href={Pages.dashboard}>
                     <Text size={size ?? "1"}>Dashboard</Text>
                 </Link>
             </TabNav.Link>

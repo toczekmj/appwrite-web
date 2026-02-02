@@ -3,7 +3,7 @@
 import {usePathname} from "next/navigation";
 import MainNav from "@/components/Dashboard/Navigation/MainNav";
 import SubNav from "@/components/Dashboard/Navigation/SubNav";
-import {Pages} from "@/app/Enums/Pages";
+import {Pages} from "@/Enums/Pages";
 import {useAuth} from "@/components/Auth/AuthContext";
 
 export default function Sidebar() {

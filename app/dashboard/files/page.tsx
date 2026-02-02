@@ -3,8 +3,8 @@
 import FileBrowserWindow from "@/components/Files/FileBrowserWindow";
 import {useEffect, useState} from "react";
 import {Models} from "appwrite";
-import {GetFolders} from "@/lib/genresDb";
-import {FolderUpdateEvent} from "@/app/Enums/FolderUpdateEvent";
+import {FolderUpdateEvent} from "@/Enums/FolderUpdateEvent";
+import {GetFolders} from "@/lib/Database/Folders";
 
 export default function Files() {
 

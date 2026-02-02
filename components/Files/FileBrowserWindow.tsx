@@ -5,7 +5,7 @@ import FolderBrowser from "@/components/Files/FolderBrowser/FolderBrowser";
 import FileBrowser from "@/components/Files/FileBrowser/FileBrowser";
 import {Models} from "appwrite";
 import React from "react";
-import {FolderUpdateEvent} from "@/app/Enums/FolderUpdateEvent";
+import {FolderUpdateEvent} from "@/Enums/FolderUpdateEvent";
 
 interface FileBrowserWindowProps {
     folders: Models.DefaultRow[] | null;

@@ -11,9 +11,9 @@ import {
     FileUploadTrigger
 } from "@/components/ui/file-upload";
 import {UploadIcon} from "lucide-react";
-import {CreateFile} from "@/lib/bucket";
 import {useAuth} from "@/components/Auth/AuthContext";
-import {LinkFileToFolder} from "@/lib/genresDb";
+import {LinkFile} from "@/lib/Database/Files";
+import {CreateFileInBucket} from "@/lib/Bucket/bucket";
 
 interface UploadFilesDialogProps {
     folderId: string;
@@ -38,12 +38,12 @@ function UploadFilesDialog({folderId, onClose}: UploadFilesDialogProps) {
         ) => {
             try {
                 const uploadFileAndCreateDbLink = async (file: File, userId: string, folder: string) => {
-                    const createdFile = await CreateFile(file, userId, (progressData) => {
+                    const createdFile = await CreateFileInBucket(file, userId, (progressData) => {
                         const percentage = (progressData.chunksUploaded / progressData.chunksTotal) * 100;
                         onProgress(file, percentage);
                     })
                     console.log(createdFile);
-                    await LinkFileToFolder(folder, createdFile.$id, createdFile.name, userId);
+                    await LinkFile(folder, createdFile.$id, createdFile.name, userId);
                 }
 
 
@@ -89,7 +89,10 @@ function UploadFilesDialog({folderId, onClose}: UploadFilesDialogProps) {
             </AlertDialog.Trigger>
 
             <AlertDialog.Content>
-                <AlertDialog.Title>Upload files</AlertDialog.Title>
+                <div className={"flex gap-5 justify-between items-center-safe"}>
+                    <AlertDialog.Title>Upload files</AlertDialog.Title>
+                    <AlertDialog.Description>Upload files to folder</AlertDialog.Description>
+                </div>
                 <FileUpload
                     maxFiles={20}
                     className={"w-full"}
