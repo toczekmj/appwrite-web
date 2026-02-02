@@ -23,7 +23,7 @@ export default function DashboardSettings() {
             <Card>
                 <div className={"flex flex-col gap-5"}>
 
-                    <div className="flex flex-col md:flex-row gap-5">
+                    <div className="flex flex-col md:flex-row gap-5 justify-between">
                         <PropertyUpdateCard headline={"E-mail"}
                                             placeholder={user ? user.email : "E-mail"}
                                             onchange={updateEmail}

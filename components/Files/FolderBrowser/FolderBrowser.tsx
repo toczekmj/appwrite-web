@@ -15,7 +15,7 @@ export default function FolderBrowser(props : FolderBrowserProps) {
     return (
         <Card>
             <div className={"flex flex-col justify-between gap-3"}>
-                <div className={"flex flex-col min-w-50 min-h-120 text-nowrap gap-1.5"}>
+                <div className={"flex flex-col h-120 text-nowrap gap-1.5 overflow-y-scroll"}>
                     <Text size={"4"}>Folders</Text>
                     <Separator size={"4"}/>
                     {

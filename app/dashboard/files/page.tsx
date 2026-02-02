@@ -18,7 +18,7 @@ export default function Files() {
     }, [event])
 
     return (
-        <div className="browser">
+        <div className="flex grow flex-col">
             <FileBrowserWindow
                 folders={folders}
                 onFolderModify={setEvent}

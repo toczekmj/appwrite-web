@@ -41,11 +41,15 @@ export default function FileBrowserWindow({folders, onFolderModify}: FileBrowser
     return (
         <Card size="3">
             <div className={"flex flex-row gap-2"}>
-                <FolderBrowser
-                    selectedFolder={selectedFolder}
-                    onFolderSelect={onFolderUpdateEvent}
-                    folders={folders}/>
-                <FileBrowser folderId={selectedFolder}/>
+                <div className={"min-w-[22%]"}>
+                    <FolderBrowser
+                        selectedFolder={selectedFolder}
+                        onFolderSelect={onFolderUpdateEvent}
+                        folders={folders}/>
+                </div>
+                <div className={"min-w-[78%]"}>
+                    <FileBrowser folderId={selectedFolder}/>
+                </div>
             </div>
         </Card>
     );
