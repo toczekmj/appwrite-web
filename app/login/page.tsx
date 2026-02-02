@@ -1,29 +1,16 @@
 'use client'
 
 import AuthForm from "@/components/Auth/AuthForm";
-import useLoginPage from "@/Hooks/Login/useLoginPage";
+import useLoginPage from "@/CodeBehind/Pages/Login/useLoginPage";
 import {Box, Button, Flex, Text} from "@radix-ui/themes";
-import {useAuth} from "@/components/Auth/AuthContext";
-import {useEffect} from "react";
-import {useRouter} from "next/navigation";
-import {Pages} from "@/Enums/Pages";
 
 export default function LoginPage() {
-
     const {
         isSignUp,
         setIsSignUp,
         handleLogin,
         handleRegistration
     } = useLoginPage();
-
-    const router = useRouter();
-    const {current} = useAuth();
-    useEffect(() => {
-        if (current) {
-            router.push(Pages.dashboard);
-        }
-    }, [current, router]);
 
     return (
         <div className="flex flex-col text-center gap-5 w-full h-full justify-center mt-25">

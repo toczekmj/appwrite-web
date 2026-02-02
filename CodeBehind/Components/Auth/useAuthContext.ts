@@ -1,6 +1,6 @@
 'use client'
 
-import {account} from "@/lib/appwrite";
+import {account} from "@/lib/Database/appwrite";
 import {AppwriteException, ID, Models} from "appwrite"
 import {useRouter} from "next/navigation";
 import {useEffect, useState} from "react";

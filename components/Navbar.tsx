@@ -10,7 +10,6 @@ export function Navbar() {
     const router = useRouter();
 
     return (
-
         <Section p="4" style={{backgroundColor: "var(--gray-2)"}}>
             <Flex direction="row" justify="between">
                 <Text size='8'>My App</Text>
@@ -32,9 +31,5 @@ export function Navbar() {
                 }
             </Flex>
         </Section>
-
-
     )
-
-
 }

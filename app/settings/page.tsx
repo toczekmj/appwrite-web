@@ -2,7 +2,7 @@
 
 import PropertyUpdateCard from "@/components/Dashboard/Settings/PropertyUpdateCard";
 import SaveChangesDialog from "@/components/Dashboard/Settings/SaveChangesDialog";
-import {useDashboardSettings} from "@/Hooks/Settings/useDashboardSettings";
+import {useDashboardSettings} from "@/CodeBehind/Pages/Settings/useDashboardSettings";
 import {Card} from "@radix-ui/themes";
 import Protected from "@/components/Auth/Protected";
 

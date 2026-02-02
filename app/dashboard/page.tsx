@@ -1,5 +1,9 @@
+import ModelsCard from "@/components/Dashboard/Home/Models/ModelsCard";
+
 export default function Dashboard() {
     return (
-        <>Dashboard</>
+        // <div>
+            <ModelsCard/>
+        // </div>
     );
 }

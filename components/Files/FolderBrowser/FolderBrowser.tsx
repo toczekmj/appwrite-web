@@ -1,64 +1,16 @@
 'use client'
 
 import FolderButton from "@/components/Files/FolderBrowser/FolderButton";
-import {Models} from "appwrite";
 import {Button, Card, Separator, Text} from "@radix-ui/themes";
 import {FolderUpdateEvent} from "@/Enums/FolderUpdateEvent";
 import CreateFolderDialog from "@/components/Files/FolderBrowser/Dialogs/CreateFolderDialog";
 import EditFolderDialog from "@/components/Files/FolderBrowser/Dialogs/EditFolderDialog";
-import {useAuth} from "@/components/Auth/AuthContext";
-import {FolderColumns} from "@/Enums/Database/FolderColumns";
-import {CreateFolder, DeleteFolder, UpdateFolder} from "@/lib/Database/Folders";
+import {FolderColumns} from "@/lib/Database/Enums/FolderColumns";
+import useFolderBrowserContext, {FolderBrowserProps} from "@/CodeBehind/Components/Files/useFolderBrowserContext";
 
-interface FolderBrowserProps {
-    folders: Models.DefaultRow[] | null;
-    selectedFolder: string | null;
-    onFolderSelect: (event: FolderUpdateEvent, folderId: string | null) => void;
-}
 
-export default function FolderBrowser({folders, selectedFolder, onFolderSelect} : FolderBrowserProps) {
-    const {currentUserInfo} = useAuth();
-
-    const isSelectedFolder = (id: string) => {
-        return selectedFolder === id;
-    }
-
-    async function deleteFolder() {
-        if (selectedFolder) {
-            await DeleteFolder(selectedFolder);
-            folders = folders?.filter(row => row[FolderColumns.ID] != selectedFolder) ?? null;
-            onFolderSelect(FolderUpdateEvent.Delete, null);
-        }
-    }
-
-    async function createFolder(name: string | null){
-        if (name == null || name == "") {
-            console.error("Name is required");
-            return;
-        }
-
-        const result = await CreateFolder(name, currentUserInfo?.$id ?? "");
-        folders?.push(result);
-        onFolderSelect(FolderUpdateEvent.Select, result[FolderColumns.ID]);
-    }
-
-    async function editFolder(name: string){
-        if (name == "" || selectedFolder == null) {
-            console.error("Name is required when editing folder");
-            return;
-        }
-
-        const result = await UpdateFolder(selectedFolder, name);
-        console.log(result);
-        folders = folders?.filter(f => f.$id != selectedFolder) ?? null;
-        folders?.push(result);
-        onFolderSelect(FolderUpdateEvent.Update, selectedFolder)
-    }
-
-    function getSelectedFolderName() {
-        const res = folders?.find(row => row.$id == selectedFolder);
-        return res ? res[FolderColumns.ReadableName] : "";
-    }
+export default function FolderBrowser(props : FolderBrowserProps) {
+    const ctx = useFolderBrowserContext(props)
 
     return (
         <Card>
@@ -67,12 +19,12 @@ export default function FolderBrowser({folders, selectedFolder, onFolderSelect} 
                     <Text size={"4"}>Folders</Text>
                     <Separator size={"4"}/>
                     {
-                        folders ? (
-                            folders.map((folder, index) => (
+                        ctx.folders ? (
+                            ctx.folders.map((folder, index) => (
                                 <FolderButton key={index}
                                               label={folder[FolderColumns.ReadableName]}
-                                              selected={isSelectedFolder(folder[FolderColumns.ID])}
-                                              onFolderClick={() => onFolderSelect(FolderUpdateEvent.Select, folder[FolderColumns.ID])}
+                                              selected={ctx.isSelectedFolder(folder[FolderColumns.ID])}
+                                              onFolderClick={() => ctx.onFolderSelect(FolderUpdateEvent.Select, folder[FolderColumns.ID])}
 
                                 />
                             ))
@@ -83,17 +35,17 @@ export default function FolderBrowser({folders, selectedFolder, onFolderSelect} 
                 <Separator size={"4"}/>
 
                 <div className={"flex flex-row justify-around gap-3"}>
-                    <CreateFolderDialog onAction={createFolder} />
+                    <CreateFolderDialog onAction={ctx.createFolder} />
 
-                    <EditFolderDialog disabled={selectedFolder == null}
-                                      onAction={editFolder}
-                                      folderName={getSelectedFolderName()} />
+                    <EditFolderDialog disabled={ctx.selectedFolder == null}
+                                      onAction={ctx.editFolder}
+                                      folderName={ctx.getSelectedFolderName()} />
 
 
                     <Button variant={"solid"}
                             color={"red"}
-                            disabled={selectedFolder === null}
-                            onClick={deleteFolder}
+                            disabled={ctx.selectedFolder === null}
+                            onClick={ctx.deleteFolder}
                     >[-]</Button>
                 </div>
             </div>

@@ -1,9 +1,19 @@
 'use client'
 
 import {useAuth} from '@/components/Auth/AuthContext'
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
+import {Pages} from "@/Enums/Pages";
+import {useRouter} from "next/navigation";
 
 export default function useLoginPage() {
+    const router = useRouter();
+    const {current} = useAuth();
+    useEffect(() => {
+        if (current) {
+            router.push(Pages.dashboard);
+        }
+    }, [current, router]);
+
     const { login, register } = useAuth();
     const [isSignUp, setIsSignUp] = useState(false);
 

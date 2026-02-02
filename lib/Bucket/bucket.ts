@@ -1,4 +1,4 @@
-import {storage} from "@/lib/appwrite";
+import {storage} from "@/lib/Database/appwrite";
 import {ID, Permission, Role} from "appwrite";
 
 const bucketId = "697b3e870011e6d9fb79"

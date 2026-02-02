@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {AlertDialog, Button} from "@radix-ui/themes";
 import {
     FileUpload,
@@ -11,9 +11,7 @@ import {
     FileUploadTrigger
 } from "@/components/ui/file-upload";
 import {UploadIcon} from "lucide-react";
-import {useAuth} from "@/components/Auth/AuthContext";
-import {LinkFile} from "@/lib/Database/Files";
-import {CreateFileInBucket} from "@/lib/Bucket/bucket";
+import {useUploadFilesDialogContext} from "@/CodeBehind/Components/Files/useUploadFilesDialogContext";
 
 interface UploadFilesDialogProps {
     folderId: string;
@@ -21,65 +19,7 @@ interface UploadFilesDialogProps {
 }
 
 function UploadFilesDialog({folderId, onClose}: UploadFilesDialogProps) {
-    const [files, setFiles] = useState<File[]>([]);
-    const {currentUserInfo} = useAuth();
-    const onUpload = React.useCallback(
-        async (
-            files: File[],
-            {
-                onProgress,
-                onSuccess,
-                onError,
-            }: {
-                onProgress: (file: File, progress: number) => void;
-                onSuccess: (file: File) => void;
-                onError: (file: File, error: Error) => void;
-            },
-        ) => {
-            try {
-                const uploadFileAndCreateDbLink = async (file: File, userId: string, folder: string) => {
-                    const createdFile = await CreateFileInBucket(file, userId, (progressData) => {
-                        const percentage = (progressData.chunksUploaded / progressData.chunksTotal) * 100;
-                        onProgress(file, percentage);
-                    })
-                    console.log(createdFile);
-                    await LinkFile(folder, createdFile.$id, createdFile.name, userId);
-                }
-
-
-                const uploadPromises = files.map(async (file) => {
-                    try {
-                        const userId = currentUserInfo?.$id;
-
-                        if (!userId) {
-                            throw new Error("Could not find user");
-                        }
-
-                        await uploadFileAndCreateDbLink(file, userId, folderId);
-
-
-                        onSuccess(file);
-                    } catch (error) {
-                        onError(
-                            file,
-                            error instanceof Error ? error : new Error("Upload failed"),
-                        );
-                    }
-                });
-
-                await Promise.all(uploadPromises);
-            } catch (error) {
-                console.error("Unexpected error during upload:", error);
-            }
-        },
-        [currentUserInfo?.$id, folderId],
-    );
-
-    const onFileReject = React.useCallback((file: File, message: string) => {
-        console.log(message, {
-            description: `"${file.name.length > 20 ? `${file.name.slice(0, 20)}...` : file.name}" has been rejected`,
-        });
-    }, []);
+    const ctx = useUploadFilesDialogContext(folderId);
 
     return (
         <AlertDialog.Root>
@@ -96,9 +36,9 @@ function UploadFilesDialog({folderId, onClose}: UploadFilesDialogProps) {
                 <FileUpload
                     maxFiles={20}
                     className={"w-full"}
-                    onAccept={(files) => setFiles(files)}
-                    onUpload={onUpload}
-                    onFileReject={onFileReject}
+                    onAccept={(files) => ctx.setFiles(files)}
+                    onUpload={ctx.onUpload}
+                    onFileReject={ctx.onFileReject}
                     multiple>
                     <FileUploadDropzone>
                         <div className="flex flex-col items-center gap-1 text-center">
@@ -117,16 +57,11 @@ function UploadFilesDialog({folderId, onClose}: UploadFilesDialogProps) {
                         </FileUploadTrigger>
                     </FileUploadDropzone>
                     <FileUploadList>
-                        {files.map((file, index) => (
+                        {ctx.files.map((file, index) => (
                             <FileUploadItem key={index} value={file} className="flex-col">
                                 <div className="flex w-full items-center gap-2">
                                     <FileUploadItemPreview/>
                                     <FileUploadItemMetadata/>
-                                    {/*<FileUploadItemDelete asChild>*/}
-                                    {/*    <Button variant="ghost" size="1">*/}
-                                    {/*        <X/>*/}
-                                    {/*    </Button>*/}
-                                    {/*</FileUploadItemDelete>*/}
                                 </div>
                                 <FileUploadItemProgress/>
                             </FileUploadItem>

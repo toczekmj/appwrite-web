@@ -1,6 +1,6 @@
 'use client'
 
-import useAuthContext, {AuthContextType} from "@/Hooks/Auth/useAuthContext";
+import useAuthContext, {AuthContextType} from "@/CodeBehind/Components/Auth/useAuthContext";
 import React, {createContext, useContext} from "react";
 
 const AuthContext = createContext<AuthContextType | null>(null);

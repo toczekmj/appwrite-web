@@ -1,9 +1,8 @@
 import {Card, Separator, Text} from "@radix-ui/themes";
-import {Models} from "appwrite";
-import {useEffect, useState} from "react";
 import UploadFilesDialog from "@/components/Files/FileBrowser/Dialogs/UploadFilesDialog";
 import File from "@/components/Files/FileBrowser/File";
-import {DeleteFile, GetFiles} from "@/lib/Database/Files";
+import {FileColumns} from "@/lib/Database/Enums/FileColumns";
+import {useFileBrowserContext} from "@/CodeBehind/Components/Files/useFileBrowserContext";
 
 
 interface FileBrowserProps {
@@ -11,46 +10,7 @@ interface FileBrowserProps {
 }
 
 export default function FileBrowser({folderId}: FileBrowserProps) {
-    const [files, setFiles] = useState<Models.DefaultRow[]>([]);
-    const [loading, setLoading] = useState(false);
-
-    const fetchFiles = async () => {
-        setLoading(true);
-        try {
-            if (folderId) {
-                const result = await GetFiles(folderId)
-                setFiles(result);
-            }
-        } catch (error) {
-            console.log(error);
-            setFiles([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (!folderId) {
-            setFiles([]);
-            return;
-        }
-        fetchFiles();
-    }, [folderId]);
-
-    const handleUploadComplete = () => {
-        fetchFiles();
-    }
-
-    const deleteFile = async (id: string) => {
-        try {
-            await DeleteFile(id);
-            const newFiles = files.filter((f) => f.$id !== id);
-            setFiles(newFiles);
-        }
-        catch (error) {
-
-        }
-    }
+    const ctx = useFileBrowserContext(folderId);
 
     return (
         <Card>
@@ -59,7 +19,7 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
                     <Text size={"5"}>Files</Text>
                     {
                         folderId ? (
-                            <UploadFilesDialog onClose={handleUploadComplete} folderId={folderId}/>
+                            <UploadFilesDialog onClose={ctx.handleUploadComplete} folderId={folderId}/>
                         ) : <></>
                     }
                 </div>
@@ -68,15 +28,15 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
                 {
                     !folderId ? (
                         <Text size={"4"}>Select folder to show files</Text>
-                    ) : loading ? (
+                    ) : ctx.loading ? (
                         <Text>Loading...</Text>
                     ) : (
                         <div>
                             <div className="flex flex-col gap-1.5">
                                 {
-                                    files.map((file, index) => {
+                                    ctx.files.map((file, index) => {
                                         return (
-                                            <File key={index} onDelete={deleteFile} name={file["FileName"]} id={file.$id}/>
+                                            <File key={index} onDelete={ctx.deleteFile} name={file[FileColumns.FileName]} id={file.$id}/>
                                         )
                                     })
                                 }
