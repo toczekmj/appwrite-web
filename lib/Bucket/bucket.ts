@@ -1,7 +1,7 @@
 import {storage} from "@/lib/Database/appwrite";
 import {ID, Permission, Role} from "appwrite";
 
-const bucketId = "697b3e870011e6d9fb79"
+const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID as string;
 
 export function CreateFileInBucket(
     file: File,
@@ -14,18 +14,17 @@ export function CreateFileInBucket(
         chunksUploaded: number
     }) => void
 ) {
-    console.log("Creating file...", userId);
     return storage.createFile({
-        file: file,
+            file: file,
         fileId: ID.unique(),
-        bucketId: bucketId,
-        onProgress: onProgress,
-        permissions: [
-            Permission.read(Role.user(userId)),
-            Permission.write(Role.user(userId)),
-            Permission.delete(Role.user(userId)),
-        ]
-    });
+            bucketId: bucketId,
+            onProgress: onProgress,
+            permissions: [
+                Permission.read(Role.user(userId)),
+                Permission.write(Role.user(userId)),
+                Permission.delete(Role.user(userId)),
+            ]
+        });
 }
 
 export async function DeleteFileFromBucket(fileId: string){
