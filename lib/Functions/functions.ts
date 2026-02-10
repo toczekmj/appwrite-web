@@ -1,12 +1,12 @@
 import { functions } from "../Database/appwrite";
 
 export {
-    ExecuteFtt,
+    ExecuteFft,
 }
 
-function ExecuteFtt(fileId: string) {
+function ExecuteFft(fileId: string) {
   const promise = functions.createExecution({
-    functionId: "698b209e6073c2cae16e",
+    functionId: "fft",
     body: `{"fileId": "${fileId}"}`,
   });
 
