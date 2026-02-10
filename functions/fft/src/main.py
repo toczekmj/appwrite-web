@@ -79,6 +79,7 @@ def _is_wav(file_bytes: bytes) -> bool:
 
 def main(context):
     data = _get_request_data(context)
+    context.log("Received data:", data)
     file_id = data.get("fileId") or data.get("FileId") or data.get("id")
     if not file_id:
         return context.res.json({
@@ -183,6 +184,7 @@ def main(context):
     else:
         peak_index = 0
 
+    context.log(f"FFT computed: {len(frequencies)} frequencies, peak at {frequencies[peak_index]:.2f} Hz with magnitude {magnitudes[peak_index]:.2f}")
     return context.res.json({
         "ok": True,
         "fileId": file_id,
