@@ -127,7 +127,8 @@ def main(context):
         documents = tablesDb.list_rows(database_id, table_id, queries = [
             Query.equal("fileId", file_id)
         ])
-        document = documents["rows"][0] if documents.get("rows") else document = documents[0] if isinstance(documents, list) and len(documents) > 0 else None 
+        context.log(f"Query result: {documents}")
+        document = documents["rows"][0] if documents.get("rows") else None
     except Exception as exc:
         context.error(str(exc))
         return context.res.json({
