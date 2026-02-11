@@ -1,0 +1,236 @@
+{
+    "projectId": "698b09b80015413578cc",
+    "projectName": "Appwrite Project",
+    "settings": {
+        "services": {
+            "account": true,
+            "avatars": true,
+            "databases": true,
+            "locale": true,
+            "health": true,
+            "storage": true,
+            "teams": true,
+            "users": true,
+            "sites": true,
+            "functions": true,
+            "graphql": true,
+            "messaging": true
+        },
+        "auth": {
+            "methods": {
+                "jwt": true,
+                "phone": true,
+                "invites": true,
+                "anonymous": true,
+                "email-otp": true,
+                "magic-url": true,
+                "email-password": true
+            },
+            "security": {
+                "duration": 31536000,
+                "limit": 0,
+                "sessionsLimit": 10,
+                "passwordHistory": 0,
+                "passwordDictionary": false,
+                "personalDataCheck": false,
+                "sessionAlerts": false,
+                "mockNumbers": []
+            }
+        }
+    },
+    "functions": [
+        {
+            "$id": "fft",
+            "name": "FFT",
+            "runtime": "python-3.12",
+            "path": "functions/FFT",
+            "entrypoint": "src/main.py",
+            "execute": [
+                "any"
+            ],
+            "enabled": true,
+            "logging": true,
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "commands": "pip install -r requirements.txt",
+            "scopes": [],
+            "specification": "s-8vcpu-8gb"
+        },
+        {
+            "$id": "698ca0360007601b9e1c",
+            "name": "GetFilesFromFolder",
+            "runtime": "python-3.12",
+            "path": "functions/GetFilesFromFolder",
+            "entrypoint": "src/main.py",
+            "execute": [
+                "any"
+            ],
+            "enabled": true,
+            "logging": true,
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "commands": "pip install -r requirements.txt",
+            "scopes": [],
+            "specification": "s-0.5vcpu-512mb"
+        }
+    ],
+    "sites": [
+        {
+            "$id": "698b0f7a001896da6438",
+            "name": "Praca-magisterska",
+            "path": "sites/Praca-magisterska",
+            "framework": "nextjs",
+            "enabled": true,
+            "logging": true,
+            "timeout": 30,
+            "buildRuntime": "node-22",
+            "adapter": "ssr",
+            "installCommand": "npm install",
+            "buildCommand": "npm run build",
+            "outputDirectory": "./.next",
+            "fallbackFile": "",
+            "specification": "s-8vcpu-8gb"
+        }
+    ],
+    "tablesDB": [
+        {
+            "$id": "698b1344001fada58b06",
+            "name": "Music",
+            "enabled": true
+        }
+    ],
+    "tables": [
+        {
+            "$id": "genres",
+            "$permissions": [
+                "create(\"users\")"
+            ],
+            "databaseId": "698b1344001fada58b06",
+            "name": "genres",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "ReadableName",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "Slug",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 250,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "files",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "files",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "genre",
+                    "onDelete": "cascade",
+                    "side": "parent"
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "files",
+            "$permissions": [
+                "create(\"users\")",
+                "delete(\"users\")"
+            ],
+            "databaseId": "698b1344001fada58b06",
+            "name": "files",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "genre",
+                    "type": "relationship",
+                    "required": false,
+                    "array": false,
+                    "relatedTable": "genres",
+                    "relationType": "oneToMany",
+                    "twoWay": true,
+                    "twoWayKey": "files",
+                    "onDelete": "cascade",
+                    "side": "child"
+                },
+                {
+                    "key": "FileId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "FileName",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "models",
+            "$permissions": [
+                "create(\"users\")"
+            ],
+            "databaseId": "698b1344001fada58b06",
+            "name": "models",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": []
+        }
+    ],
+    "buckets": [
+        {
+            "$id": "698b16730035b9c01e03",
+            "$permissions": [
+                "create(\"users\")",
+                "read(\"users\")",
+                "update(\"users\")",
+                "delete(\"users\")"
+            ],
+            "fileSecurity": true,
+            "name": "files",
+            "enabled": true,
+            "maximumFileSize": 3000000000,
+            "allowedFileExtensions": [],
+            "compression": "none",
+            "encryption": true,
+            "antivirus": true
+        }
+    ],
+    "teams": [],
+    "topics": []
+}
