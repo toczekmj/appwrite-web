@@ -1,209 +1,203 @@
-from appwrite.client import Client
-from appwrite.services.tables_db import TablesDB
-from appwrite.query import Query
-from appwrite.services.storage import Storage
-import io
-import json
 import os
+import io
 import wave
-from typing import Any, Dict, Optional, Tuple
+from typing import TypedDict, Optional
 
 import numpy as np
+import json as json_lib
+from appwrite.client import Client
+from appwrite.query import Query
+from appwrite.services.storage import Storage
+from appwrite.services.tables_db import TablesDB
 
 
-def _get_request_data(context) -> Dict[str, Any]:
-    body = getattr(context.req, "body", None)
-    if isinstance(body, (bytes, bytearray)):
-        body_text = body.decode("utf-8", errors="ignore")
-    elif body is None:
-        body_text = ""
-    else:
-        body_text = str(body)
-
-    data: Dict[str, Any] = {}
-    body_text = body_text.strip()
-    if body_text:
-        try:
-            data = json.loads(body_text)
-        except Exception:
-            data = {}
-
-    query = getattr(context.req, "query", None) or {}
-    if isinstance(query, dict):
-        data = {**query, **data}
-    return data
+class Folder(TypedDict):
+    genre: str
+    files: list[str]
 
 
-def _parse_wav_samples(file_bytes: bytes) -> Tuple[np.ndarray, int]:
-    with wave.open(io.BytesIO(file_bytes), "rb") as wav:
-        n_channels = wav.getnchannels()
-        sample_width = wav.getsampwidth()
-        sample_rate = wav.getframerate()
-        n_frames = wav.getnframes()
-        raw = wav.readframes(n_frames)
-
-    if sample_width == 1:
-        data = np.frombuffer(raw, dtype=np.uint8).astype(np.float32)
-        data = (data - 128.0) / 128.0
-    elif sample_width == 2:
-        data = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
-    elif sample_width == 3:
-        bytes_array = np.frombuffer(raw, dtype=np.uint8)
-        bytes_array = bytes_array.reshape(-1, 3)
-        data32 = (
-            bytes_array[:, 0].astype(np.int32)
-            | (bytes_array[:, 1].astype(np.int32) << 8)
-            | (bytes_array[:, 2].astype(np.int32) << 16)
-        )
-        sign_bit = 1 << 23
-        data32 = (data32 ^ sign_bit) - sign_bit
-        data = data32.astype(np.float32) / float(1 << 23)
-    elif sample_width == 4:
-        data = np.frombuffer(raw, dtype=np.int32).astype(np.float32) / float(1 << 31)
-    else:
-        raise ValueError(f"Unsupported WAV sample width: {sample_width}")
-
-    if n_channels > 1:
-        data = data.reshape(-1, n_channels)
-        data = data.mean(axis=1)
-
-    return data, sample_rate
+class GenreFFT(TypedDict):
+    Genre: str
+    Files: dict[str, list[float]]
 
 
-def _is_wav(file_bytes: bytes) -> bool:
-    return (
-        len(file_bytes) >= 12
-        and file_bytes[0:4] == b"RIFF"
-        and file_bytes[8:12] == b"WAVE"
+def initialize_variables(context):
+    global dbId, \
+        bucketId, \
+        projectId, \
+        endpoint, \
+        tablesDb, \
+        storage, \
+        selected_genre, \
+        current_user_session
+
+    dbId = os.environ['APPWRITE_DATABASE_ID']
+    bucketId = os.environ['APPWRITE_BUCKET_ID']
+    projectId = os.environ['APPWRITE_FUNCTION_PROJECT_ID']
+    endpoint = os.environ['APPWRITE_FUNCTION_API_ENDPOINT']
+
+    # TODO: this needs to be replaced with user id or something
+    # because with function key we have access to all files of all users
+    # not only the files for a particular user
+    # apiKey = os.environ['APPWRITE_FUNCTION_API_KEY']
+
+    # this is an attempt to use user session instead of an api key
+    raw_body = context.req.body
+    json = json_lib.loads(raw_body)
+    selected_genre = json['genre']
+    current_user_session = json['session']
+    context.log(f"Genre: {selected_genre}, session: {current_user_session}")
+
+    client = (
+        Client()
+        .set_endpoint(endpoint)
+        .set_project(projectId)
+        # .set_key(apiKey)
+        .set_session(current_user_session)
     )
-
-
-def main(context):
-    data = _get_request_data(context)
-    context.log("Received data:", data)
-    file_id = data.get("fileId") or data.get("FileId") or data.get("id")
-    if not file_id:
-        return context.res.json({
-            "ok": False,
-            "error": "Missing required field: fileId"
-        })
-
-    max_points_raw = data.get("maxPoints") or data.get("max_points") or 4096
-    try:
-        max_points = int(max_points_raw)
-        if max_points <= 0:
-            raise ValueError()
-    except Exception:
-        return context.res.json({
-            "ok": False,
-            "error": "Invalid maxPoints. Must be a positive integer."
-        })
-
-    endpoint = os.environ.get("APPWRITE_FUNCTION_API_ENDPOINT") or os.environ.get("APPWRITE_ENDPOINT") or os.environ.get("NEXT_PUBLIC_APPWRITE_ENDPOINT")
-    project_id = os.environ.get("APPWRITE_FUNCTION_PROJECT_ID") or os.environ.get("NEXT_PUBLIC_APPWRITE_PROJECT_ID")
-    api_key = (getattr(context.req, "headers", {}) or {}).get("x-appwrite-key") or os.environ.get("APPWRITE_FUNCTION_API_KEY")
-    context.log(f"Appwrite API Key from header: {'present' if api_key else 'missing'}")
-    context.log(f"API KEY: {api_key} (should be hidden in production logs)")
-    database_id = os.environ.get("APPWRITE_DATABASE_ID") or os.environ.get("NEXT_PUBLIC_APPWRITE_DATABASE_ID")
-    bucket_id = os.environ.get("APPWRITE_BUCKET_ID") or os.environ.get("NEXT_PUBLIC_APPWRITE_BUCKET_ID")
-    table_id = os.environ.get("APPWRITE_FILES_COLLECTION_ID") or "files"
-    context.log(f"Config - Endpoint: {endpoint}, Project ID: {project_id}, Database ID: {database_id}, Bucket ID: {bucket_id}, Collection ID: {table_id}")
-    if not endpoint or not project_id or not api_key or not database_id or not bucket_id:
-        return context.res.json({
-            "ok": False,
-            "error": "Missing Appwrite configuration. Ensure endpoint, project ID, API key, database ID, and bucket ID are set."
-        })
-
-    client = Client()
-    client.set_endpoint(endpoint)
-    client.set_project(project_id)
-    client.set_key(api_key)
+    context.log("Client created")
 
     tablesDb = TablesDB(client)
     storage = Storage(client)
 
-    try:
-        context.log(f"Querying for file document with fileId: {file_id}")
-        documents = tablesDb.list_rows(database_id, table_id, queries = [
-            Query.equal("fileId", file_id)
-        ])
-        context.log(f"Query result: {documents}")
-        document = documents["rows"][0] if documents.get("rows") else None
-    except Exception as exc:
-        context.error(str(exc))
-        return context.res.json({
-            "ok": False,
-            "error": "File document not found."
+
+def get_rows(table_id: str, context, query: Optional[list[str]] = None) -> list:
+    if query is None:
+        context.log("Query not provided")
+
+    context.log(f"Calling list row with params dbid = {dbId}, table_id = {table_id}, queries = {query}")
+    rows = tablesDb.list_rows(
+        database_id=dbId,
+        table_id=table_id,
+    )
+    context.log("Fetched rows")
+    return rows["rows"]
+
+
+def find_files_for_genre(genres: list[dict]) -> list[Folder]:
+    folders: list[Folder] = []
+    for genre in genres:
+        query = Query.equal('genre', genre['$id'])
+        genre_files = get_rows('files', [query])
+        file_ids = [row['FileId'] for row in genre_files]
+        folders.append({
+            "genre": genre['ReadableName'],
+            "files": file_ids
+        })
+    return folders
+
+
+def is_wav(file_bytes: bytes) -> bool:
+    return (
+            len(file_bytes) >= 12
+            and file_bytes[0:4] == b"RIFF"
+            and file_bytes[8:12] == b"WAVE"
+    )
+
+
+def get_only_wav_files(folders: list[Folder]) -> list[Folder]:
+    filtered: list[Folder] = []
+
+    for folder in folders:
+        wav_ids: list[str] = []
+        for file_id in folder['files']:
+            file_bytes = storage.get_file_view(
+                file_id=file_id,
+                bucket_id=bucketId,
+            )
+            if is_wav(file_bytes):
+                wav_ids.append(file_id)
+        filtered.append({
+            'genre': folder['genre'],
+            'files': wav_ids
         })
 
-    bucket_file_id = document.get("FileId") or document.get("fileId")
-    context.log(f"Retrieved document: {document}, bucketFileId: {bucket_file_id}")
-    if not bucket_file_id:
-        return context.res.json({
-            "ok": False,
-            "error": "File document missing FileId field."
-        })
+    return filtered
 
-    try:
-        context.log(f"Downloading file from bucket: bucketId={bucket_id}, bucketFileId={bucket_file_id}")
-        file_bytes = storage.get_file_download(bucket_id, bucket_file_id)
-    except Exception as exc:
-        context.error(str(exc))
-        return context.res.json({
-            "ok": False,
-            "error": "Unable to download file from bucket."
-        })
 
-    if not isinstance(file_bytes, (bytes, bytearray)):
-        file_bytes = str(file_bytes).encode("utf-8", errors="ignore")
+def wav_bytes_to_mono_signal(file_bytes: bytes) -> np.ndarray:
+    with wave.open(io.BytesIO(file_bytes), "rb") as wav_file:
+        channels = wav_file.getnchannels()
+        sample_width = wav_file.getsampwidth()
+        frame_count = wav_file.getnframes()
+        raw_frames = wav_file.readframes(frame_count)
 
-    if not _is_wav(file_bytes):
-        return context.res.json({
-            "ok": False,
-            "error": "Unsupported file type. Only WAV is accepted."
-        })
-
-    context.log(f"File downloaded successfully, size: {len(file_bytes)} bytes. Parsing WAV data...")
-    try:
-        samples, sample_rate = _parse_wav_samples(file_bytes)
-    except Exception as exc:
-        context.error(str(exc))
-        return context.res.json({
-            "ok": False,
-            "error": "Unable to parse WAV file."
-        })
-
-    if samples.size == 0:
-        return context.res.json({
-            "ok": False,
-            "error": "No samples found in WAV file."
-        })
-
-    context.log(f"WAV parsed successfully: {samples.size} samples at {sample_rate} Hz. Computing FFT...")
-    n = samples.size
-    fft_values = np.fft.rfft(samples)
-    magnitudes = np.abs(fft_values)
-    frequencies = np.fft.rfftfreq(n, d=1.0 / sample_rate)
-
-    if magnitudes.size > max_points:
-        step = int(np.ceil(magnitudes.size / max_points))
-        magnitudes = magnitudes[::step]
-        frequencies = frequencies[::step]
-
-    if magnitudes.size > 1:
-        peak_index = int(np.argmax(magnitudes[1:])) + 1
+    if sample_width == 1:
+        dtype = np.uint8
+        audio = np.frombuffer(raw_frames, dtype=dtype).astype(np.float32)
+        audio = (audio - 128.0) / 128.0
+    elif sample_width == 2:
+        dtype = np.int16
+        audio = np.frombuffer(raw_frames, dtype=dtype).astype(np.float32)
+        audio = audio / 32768.0
+    elif sample_width == 4:
+        dtype = np.int32
+        audio = np.frombuffer(raw_frames, dtype=dtype).astype(np.float32)
+        audio = audio / 2147483648.0
     else:
-        peak_index = 0
+        raise ValueError(f"Unsupported WAV sample width: {sample_width}")
 
-    context.log(f"FFT computed: {len(frequencies)} frequencies, peak at {frequencies[peak_index]:.2f} Hz with magnitude {magnitudes[peak_index]:.2f}")
-    return context.res.json({
-        "ok": True,
-        "fileId": file_id,
-        "bucketFileId": bucket_file_id,
-        "sampleRate": sample_rate,
-        "n": n,
-        "frequencies": frequencies.tolist(),
-        "magnitudes": magnitudes.tolist(),
-        "peakFrequency": float(frequencies[peak_index]) if frequencies.size else 0.0,
-        "peakMagnitude": float(magnitudes[peak_index]) if magnitudes.size else 0.0,
-    })
+    if channels > 1:
+        audio = audio.reshape(-1, channels).mean(axis=1)
+
+    return audio
+
+
+def compute_fft_magnitude(signal: np.ndarray) -> list[float]:
+    if signal.size == 0:
+        return []
+
+    fft_values = np.fft.rfft(signal)
+    magnitudes = np.abs(fft_values)
+    return magnitudes.tolist()
+
+
+def build_fft_output(folders: list[Folder]) -> list[GenreFFT]:
+    fft_by_genre: list[GenreFFT] = []
+
+    for folder in folders:
+        files_fft: dict[str, list[float]] = {}
+        for file_id in folder["files"]:
+            file_bytes = storage.get_file_view(
+                file_id=file_id,
+                bucket_id=bucketId,
+            )
+            signal = wav_bytes_to_mono_signal(file_bytes)
+            files_fft[file_id] = compute_fft_magnitude(signal)
+
+        fft_by_genre.append({
+            "Genre": folder["genre"],
+            "Files": files_fft
+        })
+
+    return fft_by_genre
+
+
+def main(context):
+    try:
+        # first we need to grab environment variables and initialize our appwrite client
+        initialize_variables(context)
+
+        # folder_query = Query.equal('$id', selected_genre)
+        # genres = get_rows('genres', [folder_query])
+        context.log("Lets get rows")
+        genres = get_rows('genres', context)
+        context.log(f"Found {len(genres)} genres.")
+        context.log(genres)
+        return context.res.json(genres)
+        # and map files in each folder
+        folders: list[Folder] = find_files_for_genre(genres)
+
+        # now get rid of files that are not in .wav format
+        # as it's the only format we want to work with
+        wav_files: list[Folder] = get_only_wav_files(folders)
+
+        # run transform
+        fft_results = build_fft_output(wav_files)
+
+
+
+    except Exception as e:
+        context.error(f"Error {str(e)}")
+        return context.res.json({"error": str(e)})
+    return context.res.json(fft_results)
