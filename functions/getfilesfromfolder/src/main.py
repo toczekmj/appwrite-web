@@ -35,7 +35,7 @@ def main(context):
         initialize_variables(context)
 
         res = tablesDb.list_rows(
-            table_id=genre,
+            table_id="genres",
             database_id=db_id
         )
 
