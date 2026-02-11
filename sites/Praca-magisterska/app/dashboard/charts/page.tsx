@@ -34,6 +34,6 @@ export default function Charts() {
 
     return (
         <>
-            <Button onClick={renderChart}>Render Chart</Button>
+            <Button onClick={renderChart}>Test</Button>
         </>)
 }
