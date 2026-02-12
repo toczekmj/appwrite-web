@@ -31,6 +31,8 @@ concurrency:
 jobs:
   # Build job
   build:
+    environment:
+      name: github-pages
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -70,7 +72,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            sites/Praca-magisterska/app.next/cache
+            sites/Praca-magisterska/.next/cache
           # Generate a new cache whenever packages or source files change.
           key: ${{ runner.os }}-nextjs-${{ hashFiles('sites/Praca-magisterska/**/package-lock.json', 'sites/Praca-magisterska/**/yarn.lock') }}-${{ hashFiles('sites/Praca-magisterska/**/*.[jt]s', 'sites/Praca-magisterska/**/*.[jt]sx') }}
           # If source files changed but packages didn't, rebuild from a prior cache.
