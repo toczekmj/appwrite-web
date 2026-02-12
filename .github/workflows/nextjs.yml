@@ -4,6 +4,10 @@
 #
 name: Deploy Next.js site to Pages
 
+defaults:
+  run:
+    working-directory: sites/Praca-magisterska/app
+
 on:
   # Runs on pushes targeting the default branch
   push:
@@ -79,6 +83,8 @@ jobs:
           NEXT_PUBLIC_APPWRITE_PROJECT_ID: ${{vars.NEXT_PUBLIC_APPWRITE_PROJECT_ID}}
           NEXT_PUBLIC_APPWRITE_PROJECT_NAME: ${{vars.NEXT_PUBLIC_APPWRITE_PROJECT_NAME}}
           NEXT_PUBLIC_APPWRITE_ENDPOINT: ${{vars.NEXT_PUBLIC_APPWRITE_ENDPOINT}}
+          NEXT_PUBLIC_APPWRITE_DATABASE_ID: ${{vars.NEXT_PUBLIC_APPWRITE_DATABASE_ID}}
+          NEXT_PUBLIC_APPWRITE_BUCKET_ID: ${{vars.NEXT_PUBLIC_APPWRITE_BUCKET_ID}}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
