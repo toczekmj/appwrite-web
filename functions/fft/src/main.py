@@ -1,24 +1,15 @@
-import os
 import io
+import json as json_lib
+import os
 import wave
-from typing import TypedDict, Optional
 
 import numpy as np
-import json as json_lib
 from appwrite.client import Client
 from appwrite.query import Query
+from appwrite.services.functions import Functions
 from appwrite.services.storage import Storage
 from appwrite.services.tables_db import TablesDB
-
-
-class Folder(TypedDict):
-    genre: str
-    files: list[str]
-
-
-class GenreFFT(TypedDict):
-    Genre: str
-    Files: dict[str, list[float]]
+from appwrite.id import ID
 
 
 def initialize_variables(context):
@@ -28,63 +19,30 @@ def initialize_variables(context):
         endpoint, \
         tablesDb, \
         storage, \
-        selected_genre, \
-        current_user_session
+        fileId, \
+        jwt, \
+        functions
 
     dbId = os.environ['APPWRITE_DATABASE_ID']
     bucketId = os.environ['APPWRITE_BUCKET_ID']
     projectId = os.environ['APPWRITE_FUNCTION_PROJECT_ID']
     endpoint = os.environ['APPWRITE_FUNCTION_API_ENDPOINT']
 
-    # TODO: this needs to be replaced with user id or something
-    # because with function key we have access to all files of all users
-    # not only the files for a particular user
-    # apiKey = os.environ['APPWRITE_FUNCTION_API_KEY']
-
-    # this is an attempt to use user session instead of an api key
     raw_body = context.req.body
     json = json_lib.loads(raw_body)
-    selected_genre = json['genre']
-    current_user_session = json['session']
-    context.log(f"Genre: {selected_genre}, session: {current_user_session}")
+    fileId = json['file']
+    jwt = json['jwt']
 
     client = (
         Client()
         .set_endpoint(endpoint)
         .set_project(projectId)
-        # .set_key(apiKey)
-        .set_session(current_user_session)
+        .set_jwt(jwt)
     )
-    context.log("Client created")
 
     tablesDb = TablesDB(client)
     storage = Storage(client)
-
-
-def get_rows(table_id: str, context, query: Optional[list[str]] = None) -> list:
-    if query is None:
-        context.log("Query not provided")
-
-    context.log(f"Calling list row with params dbid = {dbId}, table_id = {table_id}, queries = {query}")
-    rows = tablesDb.list_rows(
-        database_id=dbId,
-        table_id=table_id,
-    )
-    context.log("Fetched rows")
-    return rows["rows"]
-
-
-def find_files_for_genre(genres: list[dict]) -> list[Folder]:
-    folders: list[Folder] = []
-    for genre in genres:
-        query = Query.equal('genre', genre['$id'])
-        genre_files = get_rows('files', [query])
-        file_ids = [row['FileId'] for row in genre_files]
-        folders.append({
-            "genre": genre['ReadableName'],
-            "files": file_ids
-        })
-    return folders
+    functions = Functions(client)
 
 
 def is_wav(file_bytes: bytes) -> bool:
@@ -93,26 +51,6 @@ def is_wav(file_bytes: bytes) -> bool:
             and file_bytes[0:4] == b"RIFF"
             and file_bytes[8:12] == b"WAVE"
     )
-
-
-def get_only_wav_files(folders: list[Folder]) -> list[Folder]:
-    filtered: list[Folder] = []
-
-    for folder in folders:
-        wav_ids: list[str] = []
-        for file_id in folder['files']:
-            file_bytes = storage.get_file_view(
-                file_id=file_id,
-                bucket_id=bucketId,
-            )
-            if is_wav(file_bytes):
-                wav_ids.append(file_id)
-        filtered.append({
-            'genre': folder['genre'],
-            'files': wav_ids
-        })
-
-    return filtered
 
 
 def wav_bytes_to_mono_signal(file_bytes: bytes) -> np.ndarray:
@@ -152,52 +90,84 @@ def compute_fft_magnitude(signal: np.ndarray) -> list[float]:
     return magnitudes.tolist()
 
 
-def build_fft_output(folders: list[Folder]) -> list[GenreFFT]:
-    fft_by_genre: list[GenreFFT] = []
-
-    for folder in folders:
-        files_fft: dict[str, list[float]] = {}
-        for file_id in folder["files"]:
-            file_bytes = storage.get_file_view(
-                file_id=file_id,
-                bucket_id=bucketId,
-            )
-            signal = wav_bytes_to_mono_signal(file_bytes)
-            files_fft[file_id] = compute_fft_magnitude(signal)
-
-        fft_by_genre.append({
-            "Genre": folder["genre"],
-            "Files": files_fft
-        })
-
-    return fft_by_genre
-
-
 def main(context):
     try:
         # first we need to grab environment variables and initialize our appwrite client
         initialize_variables(context)
 
-        # folder_query = Query.equal('$id', selected_genre)
-        # genres = get_rows('genres', [folder_query])
-        context.log("Lets get rows")
-        genres = get_rows('genres', context)
-        context.log(f"Found {len(genres)} genres.")
-        context.log(genres)
-        return context.res.json(genres)
-        # and map files in each folder
-        folders: list[Folder] = find_files_for_genre(genres)
+        db_file_row = tablesDb.get_row(
+            database_id=dbId,
+            table_id="files",
+            row_id=fileId,
+            queries=[
+                Query.select(['FileId', 'is_transformed', 'transform_data.$id'])
+            ],
+        )
 
-        # now get rid of files that are not in .wav format
-        # as it's the only format we want to work with
-        wav_files: list[Folder] = get_only_wav_files(folders)
+        is_transformed = db_file_row['is_transformed']
+        if is_transformed is True:
+            data_id = db_file_row['transform_data']['$id']
+            existing_fft = tablesDb.get_row(
+                database_id=dbId,
+                table_id="transform_data",
+                row_id=data_id,
+                queries=[Query.select(['data'])],
+            )
+            return context.res.json(existing_fft['data'], 200)
+
+        bucket_file_id = db_file_row['FileId']
+        file_bytes = storage.get_file_view(
+            file_id=bucket_file_id,
+            bucket_id=bucketId,
+        )
+
+        if not is_wav(file_bytes):
+            return context.res.json({"error": "File is not a WAV file"}, 500)
 
         # run transform
-        fft_results = build_fft_output(wav_files)
+        signal = wav_bytes_to_mono_signal(file_bytes)
+        fft_results = compute_fft_magnitude(signal)
 
+        # seems like appwrite python sdk 1.8.1 has broken update_row
+        # so we need to have some kind of workaround, for example, a node.js proxy
+        # for now just handle it on frontend part
+        # TODO: fix this
 
-
+        # tx = tablesDb.create_transaction()
+        # context.log(f"Created transaction {tx}")
+        # if "transactions" in tx:
+        #     transaction_id = tx["transactions"][0]["$id"]
+        # else:
+        #     transaction_id = tx["$id"]
+        # context.log(f"Created transaction id {transaction_id}")
+        # tablesDb.create_row(
+        #     database_id=dbId,
+        #     table_id="transform_data",
+        #     row_id=ID.unique(),
+        #     transaction_id=transaction_id,
+        #     data={
+        #         "data": fft_results,
+        #         "file": fileId
+        #     }
+        # )
+        # context.log("Created transform data row")
+        #
+        # tablesDb.update_row(
+        #     database_id=dbId,
+        #     table_id="files",
+        #     row_id=fileId,
+        #     transaction_id=transaction_id,
+        #     data={
+        #         "is_transformed": True
+        #     },
+        #     permissions=[
+        #         Permission.read(Role.user(jwt)),
+        #         Permission.update(Role.user(jwt)),
+        #         Permission.delete(Role.user(jwt))
+        #     ]
+        # )
+        # context.log("Updated file row")
     except Exception as e:
         context.error(f"Error {str(e)}")
         return context.res.json({"error": str(e)})
-    return context.res.json(fft_results)
+    return context.res.json(fft_results, 201)
