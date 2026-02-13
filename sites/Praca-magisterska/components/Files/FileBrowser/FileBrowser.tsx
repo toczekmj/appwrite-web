@@ -18,7 +18,14 @@ export default function FileBrowser({folderId}: FileBrowserProps) {
                 <div className={"flex flex-row justify-between items-center"}>
                     <Text size={"5"}>Files</Text>
 
-                    <Text size={"5"}>Computed: {ctx.files.filter(f => f[FileColumns.IsTransformed] === true).length}/{ctx.files.length}</Text>
+                    {
+                        folderId ? (
+                            <Text size={"5"}>
+                                {/*Computed: {ctx.files.filter(f => f[FileColumns.IsTransformed] === true).length}/{ctx.files.length}*/}
+                                Computed: {ctx.computedCount}/{ctx.filesCount}
+                            </Text>
+                        ) : <></>
+                    }
 
                     {
                         folderId ? (

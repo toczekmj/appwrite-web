@@ -9,7 +9,6 @@ from appwrite.query import Query
 from appwrite.services.functions import Functions
 from appwrite.services.storage import Storage
 from appwrite.services.tables_db import TablesDB
-from appwrite.id import ID
 
 
 def initialize_variables(context):
@@ -21,17 +20,20 @@ def initialize_variables(context):
         storage, \
         fileId, \
         jwt, \
-        functions
+        functions, \
+        background
 
     dbId = os.environ['APPWRITE_DATABASE_ID']
     bucketId = os.environ['APPWRITE_BUCKET_ID']
     projectId = os.environ['APPWRITE_FUNCTION_PROJECT_ID']
     endpoint = os.environ['APPWRITE_FUNCTION_API_ENDPOINT']
+    key = os.environ['APPWRITE_FUNCTION_API_KEY']
 
     raw_body = context.req.body
     json = json_lib.loads(raw_body)
     fileId = json['file']
     jwt = json['jwt']
+    background = json['background']
 
     client = (
         Client()
@@ -100,20 +102,23 @@ def main(context):
             table_id="files",
             row_id=fileId,
             queries=[
-                Query.select(['FileId', 'is_transformed', 'transform_data.$id'])
+                Query.select(['FileId', 'is_transformed', 'transformData.$id'])
             ],
         )
 
         is_transformed = db_file_row['is_transformed']
         if is_transformed is True:
-            data_id = db_file_row['transform_data']['$id']
+            data_id = db_file_row['transformData']['$id']
             existing_fft = tablesDb.get_row(
                 database_id=dbId,
                 table_id="transform_data",
                 row_id=data_id,
                 queries=[Query.select(['data'])],
             )
-            return context.res.json(existing_fft['data'], 200)
+            if background:
+                return context.res.text("Ok", 204)
+            else:
+                return context.res.json(existing_fft['data'], 200)
 
         bucket_file_id = db_file_row['FileId']
         file_bytes = storage.get_file_view(
@@ -127,47 +132,7 @@ def main(context):
         # run transform
         signal = wav_bytes_to_mono_signal(file_bytes)
         fft_results = compute_fft_magnitude(signal)
-
-        # seems like appwrite python sdk 1.8.1 has broken update_row
-        # so we need to have some kind of workaround, for example, a node.js proxy
-        # for now just handle it on frontend part
-        # TODO: fix this
-
-        # tx = tablesDb.create_transaction()
-        # context.log(f"Created transaction {tx}")
-        # if "transactions" in tx:
-        #     transaction_id = tx["transactions"][0]["$id"]
-        # else:
-        #     transaction_id = tx["$id"]
-        # context.log(f"Created transaction id {transaction_id}")
-        # tablesDb.create_row(
-        #     database_id=dbId,
-        #     table_id="transform_data",
-        #     row_id=ID.unique(),
-        #     transaction_id=transaction_id,
-        #     data={
-        #         "data": fft_results,
-        #         "file": fileId
-        #     }
-        # )
-        # context.log("Created transform data row")
-        #
-        # tablesDb.update_row(
-        #     database_id=dbId,
-        #     table_id="files",
-        #     row_id=fileId,
-        #     transaction_id=transaction_id,
-        #     data={
-        #         "is_transformed": True
-        #     },
-        #     permissions=[
-        #         Permission.read(Role.user(jwt)),
-        #         Permission.update(Role.user(jwt)),
-        #         Permission.delete(Role.user(jwt))
-        #     ]
-        # )
-        # context.log("Updated file row")
     except Exception as e:
         context.error(f"Error {str(e)}")
-        return context.res.json({"error": str(e)})
+        return context.res.json({"error": str(e)}, 500)
     return context.res.json(fft_results, 201)
