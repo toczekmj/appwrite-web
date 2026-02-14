@@ -93,8 +93,10 @@ def main(context):
         bucket = Storage(client)
         functions = Functions(client)
         
-        user_id = context.req.get("user_id")
-        file_id = context.req.get("file_id")
+        raw_body = context.req
+        body_json = json_lib.dumps(raw_body)
+        user_id = body_json.get("user_id")
+        file_id = body_json.get("file_id")
 
         row = tablesDb.get_row(
             database_id=database_id,

@@ -2,6 +2,7 @@
 
 # dependencies
 sites/Praca-magisterska/node_modules/*
+sites/Praca-magisterska/.next
 /.pnp
 .pnp.*
 .yarn/*
