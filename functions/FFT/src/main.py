@@ -15,19 +15,13 @@ from appwrite.permission import Permission
 from appwrite.role import Role
 from appwrite.id import ID
 
+
 project_id = os.environ['PROJECT_ID']
 database_id = os.environ['DATABASE_ID']
 bucket_id = os.environ['BUCKET_ID']
 appwrite_api_key = os.environ['APPWRITE_API_KEY']
-
-table_id = "files"
 api_url = f"https://backend.toczekmj.com/v1"
-headers = {
-    "Content-Type": "application/json",
-    "X-Appwrite-Project": project_id,
-    "X-Appwrite-Key": appwrite_api_key,
-    "X-Appwrite-Response-Format": "1.8.0"
-}
+table_id = "files"
 
 
 def wav_bytes_to_mono_signal(file_bytes: bytes) -> np.ndarray:
@@ -74,6 +68,90 @@ def is_wav(file_bytes: bytes) -> bool:
             and file_bytes[8:12] == b"WAVE"
     )
 
+
+def _validate_user_permissions(user_id: str, functions: Functions, row: Dict):
+    perm_data = {
+        "user_id": user_id,
+        "required_permissions": ["read", "update"],
+        "actual_permissions": row.get("$permissions")
+    }
+
+    permission_result = functions.create_execution(
+        function_id="checkuserpermissions",
+        body=json_lib.dumps(perm_data),
+        headers={"Content-Type": "application/json"}
+    )
+
+    permission_response_body = json_lib.loads(permission_result["responseBody"])
+    if not permission_response_body.get("has_permissions"):
+        raise Exception("User does not have required permissions.")
+
+
+def _instantiate_required_clients():
+    client = (
+        Client()
+            .set_endpoint(api_url)
+            .set_project(project_id)
+            .set_key(appwrite_api_key)
+    )
+
+    tablesDb = TablesDB(client)
+    bucket = Storage(client)
+    functions = Functions(client)
+    return tablesDb, bucket, functions
+
+
+def _parse_request_body(body):
+    body_json = json_lib.loads(body)
+    user_id = body_json.get("user_id")
+    file_id = body_json.get("file_id")
+    return user_id, file_id
+
+
+def _process_file(bucket: Storage, row: Dict):
+    music_file_id = row.get('FileId')
+    res = bucket.get_file_view(
+        bucket_id=bucket_id,
+        file_id=music_file_id
+    )
+
+    if not is_wav(res):
+        raise Exception("File is not a wav file.")
+    
+    signal = wav_bytes_to_mono_signal(res)
+    magnitudes = compute_fft_magnitude(signal)
+    return magnitudes
+
+
+def _create_csv_file(bucket: Storage, tablesDb: TablesDB, magnitudes: List[float], user_id: str, file_id: str) -> str:
+    csv_content = "frequency,magnitude\n"
+    for i, magnitude in enumerate(magnitudes):
+        csv_content += f"{i},{magnitude}\n"
+    csv_bytes = csv_content.encode("utf-8")
+
+    unique_file_id = ID.unique()
+    bucket.create_file(
+        bucket_id=bucket_id,
+        file_id=unique_file_id,
+        file=InputFile.from_bytes(csv_bytes, filename=f"{unique_file_id}.csv"),
+        permissions=[
+            Permission.read(Role.user(user_id)),
+            Permission.write(Role.user(user_id)),
+            Permission.delete(Role.user(user_id))
+        ]
+    )
+
+    row = tablesDb.update_row(
+        database_id=database_id,
+        table_id=table_id,
+        row_id=file_id,
+        data={
+            "data_file_id": unique_file_id,
+        }
+    )
+
+
+
 def main(context):
     try:
         '''
@@ -81,91 +159,35 @@ def main(context):
         - file_id: the id of the file to be processed (from 'files' table)
         - user_id: the id of the user who requested the processing, ergo the owner of the file
         '''
-
-        client = (
-            Client()
-                .set_endpoint(api_url)
-                .set_project(project_id)
-                .set_key(appwrite_api_key)
-        )
-
-        tablesDb = TablesDB(client)
-        bucket = Storage(client)
-        functions = Functions(client)
+        tablesDb, bucket, functions = _instantiate_required_clients()
+        user_id, file_id = _parse_request_body(context.req.body)
         
-        raw_body = context.req.body
-        body_json = json_lib.loads(raw_body)
-        user_id = body_json.get("user_id")
-        file_id = body_json.get("file_id")
-
         row = tablesDb.get_row(
             database_id=database_id,
             table_id=table_id,
             row_id=file_id
         )
 
+        # first we need to check if the file wasn't already processed, 
+        # if it was, we can skip processing and just return
+        if row.get("data_file_id") is not None:
+            context.log(f"File {file_id} already processed.")
+            return context.res.empty()
+
         # this function needs to have "read" and "update" permissions
         # read - to get corresponding file from storage
         # update - to update the row with new data_file_id after processing
         # thus we check if the user has both permissions before proceeding
-        permission_result = functions.create_execution(
-            function_id="checkuserpermissions",
-            body={
-                "user_id": user_id,
-                "required_permissions": ["read", "update"],
-                "actual_permissions": row.get("$permissions")
-            }
-        )
-        context.log(f"Permission check result: {permission_result}")
+        # if user doesn't have required permissions, we throw an error and stop execution
+        _validate_user_permissions(user_id, functions, row)
 
-        if not permission_result.get("has_permissions"):
-            raise Exception("User does not have required permissions.")
-
-        # if we are here, it means user has required permissions, 
+        # at this point we know that the user has required permissions and file wasn't processed yet,
         # so we can proceed with processing the file
-        music_file_id = row.get('FileId')
-        
-        res = bucket.get_file_view(
-            bucket_id=bucket_id,
-            file_id=music_file_id
-        )
-
-        if not is_wav(res):
-            raise Exception("File is not a wav file.")
-        
-        signal = wav_bytes_to_mono_signal(res)
-        magnitudes = compute_fft_magnitude(signal)
-
-        csv_content = "frequency,magnitude\n"
-        for i, magnitude in enumerate(magnitudes):
-            csv_content += f"{i},{magnitude}\n"
-        csv_bytes = csv_content.encode("utf-8")
-
-        unique_file_id = ID.unique()
-        bucket.create_file(
-            bucket_id=bucket_id,
-            file_id=unique_file_id,
-            file=InputFile.from_bytes(csv_bytes, filename=f"{unique_file_id}.csv"),
-            permissions=[
-                Permission.read(Role.user(user_id)),
-                Permission.write(Role.user(user_id)),
-                Permission.delete(Role.user(user_id))
-            ]
-        )
-        context.log(f"Created file with id: {unique_file_id}")
-
-        row = tablesDb.update_row(
-            database_id=database_id,
-            table_id=table_id,
-            row_id=file_id,
-            data={
-                "data_file_id": unique_file_id,
-            }
-        )
-        context.log(f"Updated database row with id: {file_id} to include data_file_id: {unique_file_id}")
+        magnitudes = _process_file(bucket, row)
+        _create_csv_file(bucket, tablesDb, magnitudes, user_id, file_id)
 
     except Exception as e:
         context.log(f"Error in main function: {str(e)}")
         return context.res.json(str(e), 500)
     
-    return context.res.json("Hello world!", 200)
+    return context.res.empty()

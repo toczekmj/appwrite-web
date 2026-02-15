@@ -10,7 +10,7 @@ export default function Charts() {
     const {currentUserInfo} = useAuth();
     async function renderChart() {
         const jwt = await account.createJWT();
-        const res = await ExecuteFftInBackground("698de39b001a010e9eba", currentUserInfo?.$id || "");
+        const res = await ExecuteFftInBackground("698de52d00067447d1d2", currentUserInfo?.$id || "");
         console.log(res);
     }
 

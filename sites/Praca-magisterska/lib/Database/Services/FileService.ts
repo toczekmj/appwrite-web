@@ -34,5 +34,6 @@ export async function LinkFile(folderId: string, fileId: string, fileName: strin
 export async function DeleteFile(fileId: string) {
     const file = await GetFile(fileId);
     await DeleteFileFromBucket(file[FileColumns.FileID])
+    await DeleteFileFromBucket(file[FileColumns.CsvDataFileID])
     await DeleteAsync(databaseId, Table.Files, fileId)
 }

@@ -1,4 +1,5 @@
 from typing import List
+import json as json_lib
 
 def _user_has_action(perms: List[str], user_id: str, action: str) -> bool:
     target = f"user:{user_id}"
@@ -22,12 +23,24 @@ def main(context):
             - actual_permissions (list of strings, e.g. ["read(useridhere)","update(useridhere)"])
         '''
 
-        user_id = context.req.get("user_id")
-        required_permissions = context.req.get("required_permissions", [])
-        actual_permissions = context.req.get("actual_permissions", [])
-        context.log(f"user_id: {user_id}")
-        context.log(f"required_permissions: {required_permissions}")
-        context.log(f"actual_permissions: {actual_permissions}")
+        raw_body = context.req.body
+        
+        # context.req.body may already be a parsed dict (depends on the runtime)
+        if isinstance(raw_body, dict):
+            payload = raw_body
+        elif isinstance(raw_body, (bytes, bytearray)):
+            payload = json_lib.loads(raw_body.decode("utf-8"))
+        elif isinstance(raw_body, str):
+            payload = json_lib.loads(raw_body)
+        else:
+            try:
+                payload = json_lib.loads(json_lib.dumps(raw_body))
+            except Exception:
+                raise ValueError("Unsupported request body type")
+            
+        user_id = payload.get("user_id")
+        required_permissions = payload.get("required_permissions", [])
+        actual_permissions = payload.get("actual_permissions", [])
 
         # return of this function is either true or false
         # true if user has all required permissions, false otherwise

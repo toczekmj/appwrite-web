@@ -74,6 +74,24 @@
             "commands": "pip install -r requirements.txt",
             "scopes": [],
             "specification": "s-0.5vcpu-512mb"
+        },
+        {
+            "$id": "checkuserpermissions",
+            "name": "CheckUserPermissions",
+            "runtime": "python-3.12",
+            "path": "functions/CheckUserPermissions",
+            "entrypoint": "src/main.py",
+            "execute": [
+                "any"
+            ],
+            "enabled": true,
+            "logging": true,
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "commands": "pip install -r requirements.txt",
+            "scopes": [],
+            "specification": "s-0.5vcpu-512mb"
         }
     ],
     "sites": [
