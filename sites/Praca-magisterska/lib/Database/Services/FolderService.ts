@@ -6,7 +6,7 @@ import {FileColumns} from "@/lib/Database/Enums/FileColumns";
 import {Table} from "@/lib/Database/Enums/Table";
 import {GetFiles} from "@/lib/Database/Services/FileService";
 import {DeleteFileFromBucket} from "@/lib/Bucket/bucket";
-import {GetAsync, PatchAsync, PostAsync} from "@/lib/Database/Repository/appwriteRepo";
+import {GetRowAsync, ListAsync, PatchAsync, PostAsync} from "@/lib/Database/Repository/appwriteRepo";
 
 const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID as string;
 
@@ -15,8 +15,18 @@ export async function GetFolders() {
         Query.select([FolderColumns.ReadableName, FolderColumns.Slug]),
         Query.orderDesc(FolderColumns.UpdatedAt),
     ];
-    const result = await GetAsync(databaseId, Table.Folders, query);
+    const result = await ListAsync(databaseId, Table.Folders, query);
     return result.rows;
+}
+
+export async function IsComputationOngoing(folderId: string) {
+    const query = [Query.select([FolderColumns.TransformationOngoing])];
+    const result = await GetRowAsync(databaseId, Table.Folders, folderId, query);
+
+    const isComputing = result[FolderColumns.TransformationOngoing] !== null 
+        && result[FolderColumns.TransformationOngoing] !== undefined 
+        && result[FolderColumns.TransformationOngoing] !== false;
+    return isComputing;
 }
 
 export async function CreateFolder(folderName: string, userId: string) {

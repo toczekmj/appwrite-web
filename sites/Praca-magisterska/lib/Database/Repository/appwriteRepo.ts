@@ -2,7 +2,8 @@ import {tablesDb} from "@/lib/appwrite";
 import {ID, Models, Permission, Role} from "appwrite";
 
 export {
-    GetAsync,
+    ListAsync,
+    GetRowAsync,
     PostAsync,
     DeleteAsync,
     PatchAsync
@@ -25,7 +26,7 @@ async function DeleteAsync(dbId: string, tableId: string, rowId: string, transac
     })
 }
 
-async function GetAsync(databaseId: string,
+async function ListAsync(databaseId: string,
                                tableId: string,
                                queries?: string[],
                                transactionId?: string,
@@ -35,6 +36,20 @@ async function GetAsync(databaseId: string,
         queries: queries,
         tableId: tableId,
         total: total,
+        transactionId: transactionId
+    })
+}
+
+async function GetRowAsync(databaseId: string, 
+                                tableId: string, 
+                                rowId: string, 
+                                queries?: string[], 
+                                transactionId?: string) {
+    return await tablesDb.getRow({
+        databaseId: databaseId,
+        rowId: rowId,
+        tableId: tableId,
+        queries: queries,
         transactionId: transactionId
     })
 }

@@ -3,8 +3,8 @@ import {DeleteFile, GetFiles} from "@/lib/Database/Services/FileService";
 import {Models} from "appwrite";
 import {useAuth} from "@/components/Auth/AuthContext";
 import {ExecuteFftInBackground} from "@/lib/Functions/functions";
-import {account} from "@/lib/appwrite";
 import {FileColumns} from "@/lib/Database/Enums/FileColumns";
+import { IsComputationOngoing } from "@/lib/Database/Services/FolderService";
 
 function useFileBrowserContext(folderId: string | null) {
     const [files, setFiles] = useState<Models.DefaultRow[]>([]);
@@ -12,9 +12,22 @@ function useFileBrowserContext(folderId: string | null) {
     const {currentUserInfo} = useAuth();
     const computedCount = useMemo(() => {
         return files.reduce((acc, file) =>
-            acc + (file[FileColumns.IsTransformed] === true ? 1 : 0), 0);
+            acc + (file[FileColumns.CsvDataFileID] !== null && file[FileColumns.CsvDataFileID] !== undefined && file[FileColumns.CsvDataFileID] !== "" ? 1 : 0), 0);
     }, [files]);
     const filesCount = useMemo(() => files.length, [files]);
+    const isComputing = useMemo(() => {
+        if (folderId){
+            IsComputationOngoing(folderId).then((res) => {
+                return res;
+            }).catch((error) => {
+                console.log(error);
+                return false;
+            })
+        }
+        else {
+            return false;
+        }
+    }, [folderId])
 
     useEffect(() => {
         if (!folderId) {
@@ -55,9 +68,8 @@ function useFileBrowserContext(folderId: string | null) {
     }
 
     const computeFiles = async () => {
-        const token = await account.createJWT();
         for (const file of files) {
-            await ExecuteFftInBackground(file.$id, token.jwt)
+            await ExecuteFftInBackground(file.$id, currentUserInfo?.$id || "");
         }
     }
 
@@ -73,6 +85,7 @@ function useFileBrowserContext(folderId: string | null) {
         computeFiles,
         computedCount,
         filesCount,
+        isComputing,
     }
 }
 

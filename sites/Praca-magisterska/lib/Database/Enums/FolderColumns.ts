@@ -5,4 +5,5 @@ export enum FolderColumns {
     "ReadableName" = "ReadableName",
     "Slug" = "Slug",
     "Samples" = "samples",
+    "TransformationOngoing" = "transformation_ongoing"
 }

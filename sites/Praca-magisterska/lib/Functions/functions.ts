@@ -1,5 +1,4 @@
 import {functions, tablesDb} from "../appwrite";
-import {ID} from "appwrite";
 
 
 export {
@@ -16,19 +15,14 @@ async function ExecuteFft(genre: string, session: string) {
 }
 
 
-async function ExecuteFftInBackground(fileId: string, token: string) {
-    console.log("Executing FFT in background with fileId:", fileId, "and token:", token);
+async function ExecuteFftInBackground(fileId: string, userId: string) {
+    console.log("Executing FFT in background with fileId:", fileId, "and userId:", userId);
     const response = await functions.createExecution({
         functionId: "FFT",
-        body: `{"file_id": "${fileId}", "user_id": "${token}"}`,
+        body: `{"file_id": "${fileId}", "user_id": "${userId}"}`,
         async: true
     })
-    console.log(response);
-
     return response.responseBody;
 }
 
-async function CreateFftRow(data: number[]) {
-
-}
 

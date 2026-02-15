@@ -2,13 +2,13 @@ import {Query} from "appwrite";
 import {Table} from "@/lib/Database/Enums/Table";
 import {FileColumns} from "@/lib/Database/Enums/FileColumns";
 import {DeleteFileFromBucket} from "@/lib/Bucket/bucket";
-import {DeleteAsync, GetAsync, PostAsync} from "@/lib/Database/Repository/appwriteRepo";
+import {DeleteAsync, ListAsync, PostAsync} from "@/lib/Database/Repository/appwriteRepo";
 
 const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID as string;
 
 export async function GetFile(fileId: string) {
     const query = Query.equal(FileColumns.ID, fileId);
-    const response = await GetAsync(databaseId, Table.Files, [query]);
+    const response = await ListAsync(databaseId, Table.Files, [query]);
     if (response.rows.length > 1) {
         throw new Error("Error - there is more than 1 file with given id");
     }
@@ -17,7 +17,7 @@ export async function GetFile(fileId: string) {
 
 export async function GetFiles(folderId: string) {
     const query = Query.equal(FileColumns.Genre, folderId);
-    const result = await GetAsync(databaseId, Table.Files, [query]);
+    const result = await ListAsync(databaseId, Table.Files, [query]);
     return result.rows;
 }
 
