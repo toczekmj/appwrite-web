@@ -15,19 +15,36 @@ function useFileBrowserContext(folderId: string | null) {
             acc + (file[FileColumns.CsvDataFileID] !== null && file[FileColumns.CsvDataFileID] !== undefined && file[FileColumns.CsvDataFileID] !== "" ? 1 : 0), 0);
     }, [files]);
     const filesCount = useMemo(() => files.length, [files]);
-    const isComputing = useMemo(() => {
-        if (folderId){
-            IsComputationOngoing(folderId).then((res) => {
-                return res;
-            }).catch((error) => {
-                console.log(error);
-                return false;
-            })
+
+    const [isComputing, setIsComputing] = useState<boolean>(false);
+
+    useEffect(() => {
+        let mounted = true;
+        let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+        async function checkStatus() {
+            if (!folderId) {
+                if (mounted) setIsComputing(false);
+                return;
+            }
+            try {
+                const ongoing = await IsComputationOngoing(folderId);
+                if (mounted) setIsComputing(ongoing);
+            } catch (err) {
+                console.error(err);
+                if (mounted) setIsComputing(false);
+            }
         }
-        else {
-            return false;
-        }
-    }, [folderId])
+
+        // initial check + start polling
+        checkStatus();
+        pollTimer = setInterval(checkStatus, 3000);
+
+        return () => {
+            mounted = false;
+            if (pollTimer) clearInterval(pollTimer);
+        };
+    }, [folderId]);
 
     useEffect(() => {
         if (!folderId) {
@@ -68,8 +85,18 @@ function useFileBrowserContext(folderId: string | null) {
     }
 
     const computeFiles = async () => {
-        for (const file of files) {
-            await ExecuteFftInBackground(file.$id, currentUserInfo?.$id || "");
+        if (folderId && currentUserInfo) {
+            // optimistic UI: disable button immediately
+            setIsComputing(true);
+            try {
+                const res = await ExecuteFftInBackground(folderId, currentUserInfo.$id);
+                console.log(res);
+            } catch (err) {
+                console.error(err);
+                // re-check actual status if background invocation failed
+                const ongoing = await IsComputationOngoing(folderId).catch(() => false);
+                setIsComputing(ongoing);
+            }
         }
     }
 

@@ -102,9 +102,9 @@ def _instantiate_required_clients():
 
 
 def _parse_request_body(body):
-    body_json = json_lib.loads(body)
-    user_id = body_json.get("user_id")
-    file_id = body_json.get("file_id")
+    # body_json = json_lib.loads(body)
+    user_id = body["user_id"]
+    file_id = body["file_id"]
     return user_id, file_id
 
 
@@ -168,18 +168,18 @@ def main(context):
             row_id=file_id
         )
 
-        # first we need to check if the file wasn't already processed, 
-        # if it was, we can skip processing and just return
-        if row.get("data_file_id") is not None:
-            context.log(f"File {file_id} already processed.")
-            return context.res.empty()
-
         # this function needs to have "read" and "update" permissions
         # read - to get corresponding file from storage
         # update - to update the row with new data_file_id after processing
         # thus we check if the user has both permissions before proceeding
         # if user doesn't have required permissions, we throw an error and stop execution
         _validate_user_permissions(user_id, functions, row)
+
+        # we need to check if the file wasn't already processed, 
+        # if it was, we can skip processing and just return
+        if row.get("data_file_id") is not None:
+            context.log(f"File {file_id} already processed.")
+            return context.res.empty()
 
         # at this point we know that the user has required permissions and file wasn't processed yet,
         # so we can proceed with processing the file

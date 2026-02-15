@@ -58,10 +58,10 @@
             "specification": "s-8vcpu-8gb"
         },
         {
-            "$id": "698ca0360007601b9e1c",
-            "name": "GetFilesFromFolder",
+            "$id": "checkuserpermissions",
+            "name": "CheckUserPermissions",
             "runtime": "python-3.12",
-            "path": "functions/GetFilesFromFolder",
+            "path": "functions/CheckUserPermissions",
             "entrypoint": "src/main.py",
             "execute": [
                 "any"
@@ -76,10 +76,10 @@
             "specification": "s-0.5vcpu-512mb"
         },
         {
-            "$id": "checkuserpermissions",
-            "name": "CheckUserPermissions",
+            "$id": "transformallfilesinfolder",
+            "name": "TransformAllFilesInFolder",
             "runtime": "python-3.12",
-            "path": "functions/CheckUserPermissions",
+            "path": "functions/TransformAllFilesInFolder",
             "entrypoint": "src/main.py",
             "execute": [
                 "any"
