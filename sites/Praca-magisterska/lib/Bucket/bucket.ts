@@ -1,5 +1,5 @@
-import {client, storage} from "@/lib/appwrite";
-import {ID, Permission, Role} from "appwrite";
+import { client, storage } from "@/lib/appwrite";
+import { ID, Permission, Role } from "appwrite";
 
 const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID as string;
 
@@ -15,19 +15,19 @@ export function CreateFileInBucket(
     }) => void
 ) {
     return storage.createFile({
-            file: file,
+        file: file,
         fileId: ID.unique(),
-            bucketId: bucketId,
-            onProgress: onProgress,
-            permissions: [
-                Permission.read(Role.user(userId)),
-                Permission.write(Role.user(userId)),
-                Permission.delete(Role.user(userId)),
-            ]
-        });
+        bucketId: bucketId,
+        onProgress: onProgress,
+        permissions: [
+            Permission.read(Role.user(userId)),
+            Permission.write(Role.user(userId)),
+            Permission.delete(Role.user(userId)),
+        ]
+    });
 }
 
-export async function DeleteFileFromBucket(fileId: string){
+export async function DeleteFileFromBucket(fileId: string) {
     await storage.deleteFile({
         bucketId: bucketId,
         fileId: fileId,
@@ -62,29 +62,17 @@ export async function GetFileContentAsText(fileId: string): Promise<string> {
     // X-Fallback-Cookies and returns 404 for private files.
     const viewUrl = GetFileViewUrl(fileId);
     try {
-        const buffer = await (client as any).call(
-            "GET",
-            new URL(viewUrl),
-            {},
-            {},
-            "arrayBuffer"
-        );
+        const buffer = await client.call("GET", new URL(viewUrl), {}, {}, "arrayBuffer");
         return new TextDecoder().decode(buffer);
     } catch (viewError: any) {
         const downloadUrl = GetFileDownloadUrl(fileId);
         try {
-            const buffer = await (client as any).call(
-                "GET",
-                new URL(downloadUrl),
-                {},
-                {},
-                "arrayBuffer"
-            );
+            const buffer = await client.call("GET", new URL(downloadUrl), {}, {}, "arrayBuffer");
             return new TextDecoder().decode(buffer);
         } catch (downloadError: any) {
             const msg = viewError?.message || String(viewError);
             throw new Error(
-                `Failed to fetch file content: ${msg}.` 
+                `Failed to fetch file content: ${msg}.`
             );
         }
     }
