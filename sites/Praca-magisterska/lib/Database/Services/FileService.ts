@@ -1,8 +1,8 @@
-import {Query} from "appwrite";
-import {Table} from "@/lib/Database/Enums/Table";
-import {FileColumns} from "@/lib/Database/Enums/FileColumns";
-import {DeleteFileFromBucket} from "@/lib/Bucket/bucket";
-import {DeleteAsync, ListAsync, PostAsync} from "@/lib/Database/Repository/appwriteRepo";
+import { Query } from "appwrite";
+import { Table } from "@/lib/Database/Enums/Table";
+import { FileColumns } from "@/lib/Database/Enums/FileColumns";
+import { DeleteFileFromBucket } from "@/lib/Bucket/bucket";
+import { DeleteAsync, ListAsync, PostAsync } from "@/lib/Database/Repository/appwriteRepo";
 
 const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID as string;
 
@@ -33,7 +33,14 @@ export async function LinkFile(folderId: string, fileId: string, fileName: strin
 
 export async function DeleteFile(fileId: string) {
     const file = await GetFile(fileId);
-    await DeleteFileFromBucket(file[FileColumns.FileID])
-    await DeleteFileFromBucket(file[FileColumns.CsvDataFileID])
-    await DeleteAsync(databaseId, Table.Files, fileId)
+    const hasCsvData = file[FileColumns.CsvDataFileID];
+    const hasFile = file[FileColumns.FileID];
+    if (hasCsvData) {
+        console.log('has csv')
+        await DeleteFileFromBucket(file[FileColumns.CsvDataFileID])
+    }
+    if (hasFile) {
+        console.log('has file')
+        await DeleteFileFromBucket(file[FileColumns.FileID])
+    } await DeleteAsync(databaseId, Table.Files, fileId)
 }

@@ -10,41 +10,14 @@ function useFileBrowserContext(folderId: string | null) {
     const [files, setFiles] = useState<Models.DefaultRow[]>([]);
     const [loading, setLoading] = useState(false);
     const {currentUserInfo} = useAuth();
+    
     const computedCount = useMemo(() => {
         return files.reduce((acc, file) =>
             acc + (file[FileColumns.CsvDataFileID] !== null && file[FileColumns.CsvDataFileID] !== undefined && file[FileColumns.CsvDataFileID] !== "" ? 1 : 0), 0);
     }, [files]);
+    
     const filesCount = useMemo(() => files.length, [files]);
-
     const [isComputing, setIsComputing] = useState<boolean>(false);
-
-    useEffect(() => {
-        let mounted = true;
-        let pollTimer: ReturnType<typeof setInterval> | null = null;
-
-        async function checkStatus() {
-            if (!folderId) {
-                if (mounted) setIsComputing(false);
-                return;
-            }
-            try {
-                const ongoing = await IsComputationOngoing(folderId);
-                if (mounted) setIsComputing(ongoing);
-            } catch (err) {
-                console.error(err);
-                if (mounted) setIsComputing(false);
-            }
-        }
-
-        // initial check + start polling
-        checkStatus();
-        pollTimer = setInterval(checkStatus, 3000);
-
-        return () => {
-            mounted = false;
-            if (pollTimer) clearInterval(pollTimer);
-        };
-    }, [folderId]);
 
     useEffect(() => {
         if (!folderId) {
@@ -74,13 +47,15 @@ function useFileBrowserContext(folderId: string | null) {
     }
 
     const deleteFile = async (id: string) => {
+        const file = files.find(f => f.$id === id)!;
         try {
-            await DeleteFile(id);
             const newFiles = files.filter((f) => f.$id !== id);
             setFiles(newFiles);
+            await DeleteFile(id);
         }
         catch (error) {
             // TODO: handle this error properly
+            setFiles(prev => [...prev, file])
         }
     }
 

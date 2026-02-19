@@ -18,6 +18,11 @@ function useFolderBrowserContext({selectedFolder, onFolderSelect, folders} : Fol
     }
 
     async function deleteFolder() {
+        // TODO: for some reason the order in which we execute
+        // DeleteFolder() and onFolderSelect() matters
+        // and this whole logic isn't the greatest - as this events are passed 
+        // up to the page component.
+        // I should probably refactor this later.
         if (selectedFolder) {
             await DeleteFolder(selectedFolder);
             folders = folders?.filter(row => row[FolderColumns.ID] != selectedFolder) ?? null;
