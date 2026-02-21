@@ -1,14 +1,15 @@
-import { Query } from "appwrite";
-import { Table } from "@/lib/Database/Enums/Table";
 import { FileColumns } from "@/lib/Database/Enums/FileColumns";
 import { DeleteFileFromBucket } from "@/lib/Bucket/bucket";
-import { DeleteAsync, ListAsync, PostAsync } from "@/lib/Database/Repository/appwriteRepo";
+import { databases } from "@/Generated/appwrite/databases";
+import { DATABASE } from "@/Generated/appwrite/constants";
 
-const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID as string;
+const database = databases.use(DATABASE).use('files');
 
 export async function GetFile(fileId: string) {
-    const query = Query.equal(FileColumns.ID, fileId);
-    const response = await ListAsync(databaseId, Table.Files, [query]);
+    const response = await database.list({
+        queries:(q) => [q.equal("$id", fileId)]
+    });
+
     if (response.rows.length > 1) {
         throw new Error("Error - there is more than 1 file with given id");
     }
@@ -16,9 +17,10 @@ export async function GetFile(fileId: string) {
 }
 
 export async function GetFiles(folderId: string) {
-    const query = Query.equal(FileColumns.Genre, folderId);
-    const result = await ListAsync(databaseId, Table.Files, [query]);
-    return result.rows;
+    const response = await database.list({
+        queries: (q) => [q.equal('genre', folderId)]
+    })    
+    return response.rows;
 }
 
 export async function LinkFile(folderId: string, fileId: string, fileName: string, userId: string) {
@@ -27,20 +29,33 @@ export async function LinkFile(folderId: string, fileId: string, fileName: strin
         "FileName": fileName,
         "genre": folderId,
     };
+    
+    const createdFile = await database.create(data, {
+        permissions: (permission, role) => [
+            permission.write(role.user(userId)),
+            permission.read(role.user(userId)),
+            permission.update(role.user(userId)),
+            permission.delete(role.user(userId))
+        ]
+    })
 
-    return await PostAsync(databaseId, Table.Files, data, userId)
+    return createdFile;
 }
 
 export async function DeleteFile(fileId: string) {
-    const file = await GetFile(fileId);
-    const hasCsvData = file[FileColumns.CsvDataFileID];
-    const hasFile = file[FileColumns.FileID];
+    const file = await database.get(fileId);
+    const hasCsvData = file.data_file_id;
+    const hasFile = file.FileId;
+
     if (hasCsvData) {
-        console.log('has csv')
-        await DeleteFileFromBucket(file[FileColumns.CsvDataFileID])
+        console.log("hasCsvData", hasCsvData);
+        await DeleteFileFromBucket(file.data_file_id!)
     }
+    
     if (hasFile) {
-        console.log('has file')
+        console.log("hasFile", hasFile);
         await DeleteFileFromBucket(file[FileColumns.FileID])
-    } await DeleteAsync(databaseId, Table.Files, fileId)
+    } 
+
+    await database.delete(fileId);
 }
