@@ -7,8 +7,8 @@ import React from "react";
 import Sidebar from "@/components/Dashboard/Navigation/SideBar";
 
 export const metadata: Metadata = {
-    title: 'Ideas Tracker',
-    description: 'Track your side project ideas',
+    title: 'ShazaML',
+    description: 'Praca magisterska Michał Toczek',
 };
 
 export default function RootLayout({

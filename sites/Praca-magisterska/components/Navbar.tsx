@@ -12,7 +12,7 @@ export function Navbar() {
     return (
         <Section p="4" style={{backgroundColor: "var(--gray-2)"}}>
             <Flex direction="row" justify="between">
-                <Text size='8'>My App</Text>
+                <Text size='8'>ShazaML</Text>
 
                 {
                     current ? (
