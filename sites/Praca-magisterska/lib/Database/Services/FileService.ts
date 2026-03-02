@@ -2,10 +2,18 @@ import { FileColumns } from "@/lib/Database/Enums/FileColumns";
 import { DeleteFileFromBucket } from "@/lib/Bucket/bucket";
 import { databases } from "@/Generated/appwrite/databases";
 import { DATABASE } from "@/Generated/appwrite/constants";
+import { Files } from "@/Generated/appwrite/types";
+import { FileCache, defaultFileCache } from "@/lib/Cache/InMemoryFileCache";
 
 const database = databases.use(DATABASE).use('files');
 
-export async function GetFile(fileId: string) {
+export async function GetFile(fileId: string, fileCache: FileCache = defaultFileCache) {
+    const cachedFile = fileCache.getSingleItem(fileId);
+
+    if (cachedFile) {
+        return cachedFile;
+    }
+
     const response = await database.list({
         queries:(q) => [q.equal("$id", fileId)]
     });
@@ -13,17 +21,26 @@ export async function GetFile(fileId: string) {
     if (response.rows.length > 1) {
         throw new Error("Error - there is more than 1 file with given id");
     }
+
+    fileCache.addSingleItem(response.rows[0]);
     return response.rows[0];
 }
 
-export async function GetFiles(folderId: string) {
+export async function GetFiles(folderId: string, fileCache: FileCache = defaultFileCache) {
+    const cachedFiles = fileCache.get(folderId);
+    if (cachedFiles) {
+        return cachedFiles;
+    }
+
     const response = await database.list({
         queries: (q) => [q.equal('genre', folderId)]
-    })    
+    });
+
+    fileCache.add(response.rows);
     return response.rows;
 }
 
-export async function LinkFile(folderId: string, fileId: string, fileName: string, userId: string) {
+export async function LinkFile(folderId: string, fileId: string, fileName: string, userId: string, fileCache:FileCache = defaultFileCache) {
     const data = {
         "FileId": fileId,
         "FileName": fileName,
@@ -39,23 +56,23 @@ export async function LinkFile(folderId: string, fileId: string, fileName: strin
         ]
     })
 
+    fileCache.addSingleItem(createdFile);
     return createdFile;
 }
 
-export async function DeleteFile(fileId: string) {
-    const file = await database.get(fileId);
+export async function DeleteFile(fileId: string, fileCache:FileCache = defaultFileCache) {
+    const file = await GetFile(fileId, fileCache);
     const hasCsvData = file.data_file_id;
     const hasFile = file.FileId;
 
     if (hasCsvData) {
-        console.log("hasCsvData", hasCsvData);
         await DeleteFileFromBucket(file.data_file_id!)
     }
     
     if (hasFile) {
-        console.log("hasFile", hasFile);
-        await DeleteFileFromBucket(file[FileColumns.FileID])
+        await DeleteFileFromBucket(file.FileId)
     } 
 
     await database.delete(fileId);
+    fileCache.delete(fileId);
 }

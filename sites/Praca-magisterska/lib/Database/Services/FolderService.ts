@@ -4,10 +4,17 @@ import {GetFiles} from "@/lib/Database/Services/FileService";
 import {DeleteFileFromBucket} from "@/lib/Bucket/bucket";
 import { databases, Genres } from "@/Generated/appwrite";
 import { DATABASE } from "@/Generated/appwrite/constants";
+import { defaultFolderCache } from "@/lib/Cache/InMemoryFolderCache";
+import { ICache } from "@/lib/Cache/ICache";
 
 const database = databases.use(DATABASE).use('genres');
 
-export async function GetFolders(): Promise<Genres[]> {
+export async function GetFolders(folderCache: ICache<Genres> = defaultFolderCache): Promise<Genres[]> {
+    const cachedFolders = folderCache.get();
+    if (cachedFolders) {
+        return cachedFolders;
+    }
+
     const response = await database.list({
         queries(q) {
             return [
@@ -17,6 +24,7 @@ export async function GetFolders(): Promise<Genres[]> {
         },
     })
 
+    folderCache.add(response.rows);
     return response.rows;
 }
 
@@ -35,13 +43,17 @@ export async function IsComputationOngoing(folderId: string): Promise<boolean> {
     return IsComputationOngoing !== null && IsComputationOngoing !== undefined && IsComputationOngoing !== false;
 }
 
-export async function CreateFolder(folderName: string, userId: string): Promise<Genres> {
+export async function CreateFolder(
+    folderName: string,
+    userId: string,
+    folderCache: ICache<Genres> = defaultFolderCache
+): Promise<Genres> {
     const data = {
         "ReadableName": folderName,
         "Slug": createFileSlug(folderName, userId),
     };
 
-    return await database.create(data, {
+    const result = await database.create(data, {
         permissions(permission, role) {
             return [
                 permission.write(role.user(userId)),
@@ -51,17 +63,30 @@ export async function CreateFolder(folderName: string, userId: string): Promise<
             ]
         },
     })
+
+    folderCache.addSingleItem(result);
+
+    return result;
 }
 
-export async function UpdateFolder(folderId: string, folderName: string): Promise<Genres> {
+export async function UpdateFolder(
+    folderId: string,
+    folderName: string,
+    folderCache: ICache<Genres> = defaultFolderCache
+): Promise<Genres> {
     const data = {
         "ReadableName": folderName,
     };
 
-    return await database.update(folderId, data);
+    const result = await database.update(folderId, data);
+    folderCache.update(folderId, result);
+    return result;
 }
 
-export async function DeleteFolder(folderId: string): Promise<void> {
+export async function DeleteFolder(
+    folderId: string,
+    folderCache: ICache<Genres> = defaultFolderCache
+): Promise<void> {
     const files = await GetFiles(folderId);
 
     for (const file of files) {
@@ -69,4 +94,5 @@ export async function DeleteFolder(folderId: string): Promise<void> {
     }
 
     await database.delete(folderId);
+    folderCache.delete(folderId);
 }
