@@ -13,6 +13,10 @@ Expects context.req.body (JSON): { "user_id": "<user_id>" }
 Optional: { "user_id": "<user_id>", "model_name": "My Genre Model" }
 
 Requires env: DATABASE_ID, PROJECT_ID, ENDPOINT, APPWRITE_API_KEY, BUCKET_ID
+
+If you see "Internal curl error 28" (timeout): the function does many storage downloads + training.
+Either reduce the number of files with FFT data, or increase the function execution timeout in Appwrite
+(Console → Functions → [this function] → Settings, or _APP_FUNCTIONS_TIMEOUT for self-hosted).
 """
 
 from appwrite.client import Client
@@ -34,6 +38,29 @@ from datetime import datetime
 
 # Fixed length for FFT feature vector (frequency bins). FFT output may vary; we truncate or zero-pad.
 FEATURE_LENGTH = 2000
+# Cap files used for training to avoid function timeout (each file = one storage download + training time).
+MAX_FILES_FOR_TRAINING = 75
+
+
+def _user_has_action(perms: list, user_id: str, action: str) -> bool:
+    """Check if user has the given action in the permission list. Matches CheckUserPermissions logic."""
+    if not perms:
+        return False
+    target = f"user:{user_id}"
+    prefix = f"{action}("
+    for p in perms:
+        if not isinstance(p, str):
+            continue
+        if not p.startswith(prefix):
+            continue
+        if target in p:
+            return True
+    return False
+
+
+def _user_has_read(perms: list, user_id: str) -> bool:
+    """True if user has read permission on the row."""
+    return _user_has_action(perms, user_id, "read")
 
 
 class AppwriteHelper:
@@ -65,29 +92,35 @@ class AppwriteHelper:
         self.functions = Functions(self.client)
 
     def get_user_genres(self):
-        """List all genres the user has read access to."""
+        """List genres the user has read access to. Lists all genres then filters by $permissions (function has full DB access)."""
         result = self.tablesDb.list_rows(
             database_id=self.database_id,
             table_id="genres",
-            queries=[
-                Query.equal("$permissions", Permission.read(Role.user(self.user_id)))
-            ],
+            queries=[Query.limit(100)],
         )
-        return result.get("rows", [])
+        rows = result.get("rows", [])
+        return [r for r in rows if _user_has_read(r.get("$permissions") or [], self.user_id)]
 
-    def get_user_files_with_data(self):
-        """List all files the user can read that have data_file_id set (FFT already run)."""
+    def get_user_files_with_data(self, allowed_genre_ids: set):
+        """List files that have data_file_id set and genre in allowed_genre_ids. No permission query (function sees all); access is derived from folder (genre) permission."""
         result = self.tablesDb.list_rows(
             database_id=self.database_id,
             table_id="files",
             queries=[
-                Query.equal("$permissions", Permission.read(Role.user(self.user_id))),
                 Query.is_not_null("data_file_id"),
                 Query.is_not_null("genre"),
-                Query.limit(500),
+                Query.limit(MAX_FILES_FOR_TRAINING),
             ],
         )
-        return result.get("rows", [])
+        rows = result.get("rows", [])
+        filtered = []
+        for r in rows:
+            genre_id = r.get("genre")
+            if isinstance(genre_id, dict):
+                genre_id = genre_id.get("$id")
+            if genre_id and genre_id in allowed_genre_ids:
+                filtered.append(r)
+        return filtered
 
     def download_csv(self, data_file_id: str) -> bytes:
         """Download CSV file content from storage by data_file_id."""
@@ -169,13 +202,14 @@ def main(context):
 
         context.log("Gathering user genres and files with FFT data.")
         genres = helper.get_user_genres()
-        files = helper.get_user_files_with_data()
-
         if not genres:
             return context.res.json(
                 {"error": "No genres found. Create at least one genre (folder) first."},
                 400,
             )
+        allowed_genre_ids = {g["$id"] for g in genres}
+        files = helper.get_user_files_with_data(allowed_genre_ids)
+
         if not files:
             return context.res.json(
                 {
@@ -187,6 +221,7 @@ def main(context):
         genre_ids = {g["$id"] for g in genres}
         genre_id_to_name = {g["$id"]: g.get("ReadableName", g["$id"]) for g in genres}
 
+        context.log(f"Processing up to {len(files)} files (max {MAX_FILES_FOR_TRAINING} to avoid timeout).")
         # Build (features, label) per file; label = genre ReadableName
         X_list = []
         y_list = []
@@ -279,6 +314,7 @@ def main(context):
                 "model_id": model_id,
                 "artifact_file_id": artifact_file_id,
                 "model_name": model_name,
+                "files_used": len(X_list),
                 "message": "Model trained and saved. Use artifact_file_id to load this model later without re-training.",
             },
             200,

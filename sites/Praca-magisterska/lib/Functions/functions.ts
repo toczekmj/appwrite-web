@@ -15,4 +15,13 @@ async function ExecuteFftInBackground(folderId: string, userId: string) {
     return response.responseBody;
 }
 
+export async function CreateModelSynchronously(userId: string) {
+    console.log("Creating model");
+    const response = await functions.createExecution({
+        functionId: "initializemodelcreation",
+        body: `{"user_id": "${userId}"}`,
+        async: true,
+    });
+    return response.responseBody;
+}
 

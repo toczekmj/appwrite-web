@@ -1,0 +1,5 @@
+# Use with Python 3.12 to inspect .joblib artifacts.
+# Pin to the same versions as the deployment build so joblib.load() works.
+numpy==2.4.2
+scikit-learn==1.8.0
+joblib==1.5.3
