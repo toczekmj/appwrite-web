@@ -3,10 +3,10 @@
 import {Form} from "@radix-ui/react-form";
 import {Button, TextField} from "@radix-ui/themes";
 import {Mail, ScanEyeIcon} from "lucide-react";
-import React from "react";
+import { SubmitEventHandler } from "react";
 
 interface AuthFormProps {
-    handleSubmit: (event: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
+    handleSubmit: SubmitEventHandler<HTMLFormElement>;
     submitType: string;
     isSignup: boolean;
 }

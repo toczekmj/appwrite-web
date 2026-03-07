@@ -3,8 +3,7 @@
 import { useChartContext } from "@/CodeBehind/Components/Charts/useChartContext";
 import ChartFileSelectionDropdown from "@/components/Dashboard/Charts/ChartFileSelectionDropdown";
 import FrequencyChart from "@/components/Dashboard/Charts/FrequencyChart";
-import { FileColumns } from "@/lib/Database/Enums/FileColumns";
-import { Button, Text } from "@radix-ui/themes";
+import { Text } from "@radix-ui/themes";
 import { useMemo } from "react";
 
 export default function Charts() {

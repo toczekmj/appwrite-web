@@ -17,7 +17,7 @@ export default function useLoginPage() {
     const { login, register } = useAuth();
     const [isSignUp, setIsSignUp] = useState(false);
 
-    const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleLogin = async (event: SubmitEvent) => {
         event.preventDefault();
         const form = event.target as HTMLFormElement;
         const formData = new FormData(form);
@@ -38,7 +38,7 @@ export default function useLoginPage() {
         }
     }
 
-    const handleRegistration = async (event: React.FormEvent<HTMLFormElement>) => {
+    const handleRegistration = async (event: SubmitEvent) => {
         event.preventDefault();
         const form = event.target as HTMLFormElement;
         const formData = new FormData(form);

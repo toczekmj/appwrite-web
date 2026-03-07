@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "formulahendry.auto-close-tag",
+    "formulahendry.auto-rename-tag",
+    "bradlc.vscode-tailwindcss",
+    "shardulm94.trailing-spaces",
+    "TypeScriptTeam.native-preview",
+    "PulkitGangwar.nextjs-snippets"
+  ]
+}

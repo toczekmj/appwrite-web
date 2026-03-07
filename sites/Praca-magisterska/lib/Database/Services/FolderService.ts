@@ -1,5 +1,4 @@
 import { createFileSlug } from "@/lib/slugify";
-import { FileColumns } from "@/lib/Database/Enums/FileColumns";
 import { GetFiles } from "@/lib/Database/Services/FileService";
 import { DeleteFileFromBucket } from "@/lib/Bucket/bucket";
 import { databases, Genres } from "@/Generated/appwrite";
@@ -90,7 +89,7 @@ export async function DeleteFolder(
     const files = await GetFiles(folderId);
 
     for (const file of files) {
-        await DeleteFileFromBucket(file[FileColumns.FileID])
+        await DeleteFileFromBucket(file.FileId)
     }
 
     await database.delete(folderId);

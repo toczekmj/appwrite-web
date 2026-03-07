@@ -1,7 +1,6 @@
 import { FrequencyData } from "@/components/Dashboard/Charts/FrequencyChart";
 import { Files, Genres } from "@/Generated/appwrite";
 import { GetCsvFileContent } from "@/lib/Bucket/bucket";
-import { FileColumns } from "@/lib/Database/Enums/FileColumns";
 import { GetFile, GetFiles } from "@/lib/Database/Services/FileService";
 import { GetFolders } from "@/lib/Database/Services/FolderService";
 import { useEffect, useState } from "react";
@@ -45,8 +44,8 @@ export function useChartContext() {
 
         // 2. fetch from backend
         const csvid = files
-            ?.find(file => file[FileColumns.ID] === selectedFileId)
-            ?.[FileColumns.CsvDataFileID];
+            ?.find(file => file.$id === selectedFileId)
+            ?.data_file_id;
 
         if (!csvid) return;
 
