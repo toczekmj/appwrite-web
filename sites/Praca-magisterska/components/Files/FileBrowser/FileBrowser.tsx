@@ -1,7 +1,6 @@
 import { Button, Card, Separator, Text } from "@radix-ui/themes";
 import UploadFilesDialog from "@/components/Files/FileBrowser/Dialogs/UploadFilesDialog";
 import File from "@/components/Files/FileBrowser/File";
-import { FileColumns } from "@/lib/Database/Enums/FileColumns";
 import { useFileBrowserContext } from "@/CodeBehind/Components/Files/useFileBrowserContext";
 
 interface FileBrowserProps {
@@ -51,12 +50,12 @@ export default function FileBrowser({ folderId }: FileBrowserProps) {
                   <File
                     key={index}
                     onDelete={ctx.deleteFile}
-                    name={file[FileColumns.FileName]}
+                    name={file.FileName}
                     id={file.$id}
                     isComputed={
-                      file[FileColumns.CsvDataFileID] !== null &&
-                      file[FileColumns.CsvDataFileID] !== undefined &&
-                      file[FileColumns.CsvDataFileID] !== ""
+                      file.data_file_id !== null &&
+                      file.data_file_id !== undefined &&
+                      file.data_file_id !== ""
                     }
                   />
                 );

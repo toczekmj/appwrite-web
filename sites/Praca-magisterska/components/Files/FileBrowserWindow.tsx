@@ -3,12 +3,12 @@
 import {Card} from "@radix-ui/themes";
 import FolderBrowser from "@/components/Files/FolderBrowser/FolderBrowser";
 import FileBrowser from "@/components/Files/FileBrowser/FileBrowser";
-import {Models} from "appwrite";
-import React, { useEffect } from "react";
+import React from "react";
 import {FolderUpdateEvent} from "@/Enums/FolderUpdateEvent";
+import { Genres } from "@/Generated/appwrite/types";
 
 interface FileBrowserWindowProps {
-    folders: Models.DefaultRow[] | null;
+    folders: Genres[] | null;
     onFolderModify: (event: FolderUpdateEvent) => void;
 }
 

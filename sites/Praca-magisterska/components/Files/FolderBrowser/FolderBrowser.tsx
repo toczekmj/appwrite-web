@@ -5,7 +5,6 @@ import {Button, Card, Separator, Text} from "@radix-ui/themes";
 import {FolderUpdateEvent} from "@/Enums/FolderUpdateEvent";
 import CreateFolderDialog from "@/components/Files/FolderBrowser/Dialogs/CreateFolderDialog";
 import EditFolderDialog from "@/components/Files/FolderBrowser/Dialogs/EditFolderDialog";
-import {FolderColumns} from "@/lib/Database/Enums/FolderColumns";
 import useFolderBrowserContext, {FolderBrowserProps} from "@/CodeBehind/Components/Files/useFolderBrowserContext";
 
 
@@ -22,9 +21,9 @@ export default function FolderBrowser(props : FolderBrowserProps) {
                         ctx.folders ? (
                             ctx.folders.map((folder, index) => (
                                 <FolderButton key={index}
-                                              label={folder[FolderColumns.ReadableName]}
-                                              selected={ctx.isSelectedFolder(folder[FolderColumns.ID])}
-                                              onFolderClick={() => ctx.onFolderSelect(FolderUpdateEvent.Select, folder[FolderColumns.ID])}
+                                              label={folder.ReadableName}
+                                              selected={ctx.isSelectedFolder(folder.$id)}
+                                              onFolderClick={() => ctx.onFolderSelect(FolderUpdateEvent.Select, folder.$id)}
 
                                 />
                             ))

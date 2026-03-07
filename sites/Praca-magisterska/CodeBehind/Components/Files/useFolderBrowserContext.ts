@@ -1,11 +1,10 @@
-import {Models} from "appwrite";
 import {FolderUpdateEvent} from "@/Enums/FolderUpdateEvent";
 import {useAuth} from "@/components/Auth/AuthContext";
-import {FolderColumns} from "@/lib/Database/Enums/FolderColumns";
 import {CreateFolder, DeleteFolder, UpdateFolder} from "@/lib/Database/Services/FolderService";
+import { Genres } from "@/Generated/appwrite/types";
 
 export interface FolderBrowserProps {
-    folders: Models.DefaultRow[] | null;
+    folders: Genres[] | null;
     selectedFolder: string | null;
     onFolderSelect: (event: FolderUpdateEvent, folderId: string | null) => void;
 }
@@ -36,7 +35,7 @@ function useFolderBrowserContext({selectedFolder, onFolderSelect, folders} : Fol
         }
 
         const result = await CreateFolder(name, currentUserInfo?.$id ?? "");
-        onFolderSelect(FolderUpdateEvent.Select, result[FolderColumns.ID]);
+        onFolderSelect(FolderUpdateEvent.Select, result.$id);
     }
 
     async function editFolder(name: string){
@@ -52,7 +51,7 @@ function useFolderBrowserContext({selectedFolder, onFolderSelect, folders} : Fol
 
     function getSelectedFolderName() {
         const res = folders?.find(row => row.$id == selectedFolder);
-        return res ? res[FolderColumns.ReadableName] : "";
+        return res ? res.ReadableName : "";
     }
 
     return {

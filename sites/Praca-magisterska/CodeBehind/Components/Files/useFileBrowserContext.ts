@@ -1,19 +1,18 @@
 import {useEffect, useMemo, useState} from "react";
 import {DeleteFile, GetFiles} from "@/lib/Database/Services/FileService";
-import {Models} from "appwrite";
 import {useAuth} from "@/components/Auth/AuthContext";
 import {ExecuteFftInBackground} from "@/lib/Functions/functions";
-import {FileColumns} from "@/lib/Database/Enums/FileColumns";
 import { IsComputationOngoing } from "@/lib/Database/Services/FolderService";
+import { Files } from "@/Generated/appwrite";
 
 function useFileBrowserContext(folderId: string | null) {
-    const [files, setFiles] = useState<Models.DefaultRow[]>([]);
+    const [files, setFiles] = useState<Files[]>([]);
     const [loading, setLoading] = useState(false);
     const {currentUserInfo} = useAuth();
     
     const computedCount = useMemo(() => {
         return files.reduce((acc, file) =>
-            acc + (file[FileColumns.CsvDataFileID] !== null && file[FileColumns.CsvDataFileID] !== undefined && file[FileColumns.CsvDataFileID] !== "" ? 1 : 0), 0);
+            acc + (file.data_file_id !== null && file.data_file_id !== undefined && file.data_file_id !== "" ? 1 : 0), 0);
     }, [files]);
     
     const filesCount = useMemo(() => files.length, [files]);

@@ -1,4 +1,3 @@
-import React from 'react';
 import {BrainIcon, XIcon} from "lucide-react";
 import {Button, Text} from "@radix-ui/themes";
 
