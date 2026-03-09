@@ -1,24 +1,23 @@
 import {TabNav, Text} from "@radix-ui/themes";
 import Link from "next/link";
 import {Responsive} from "@radix-ui/themes/props";
-import {getSubNavItems, Pages} from "@/Enums/Pages";
+import {getMainNavItems, Pages} from "@/Enums/Pages";
 
-interface SubNavProps {
+interface TopNavProps {
     isActive: (p: Pages) => boolean;
-    parent: Pages;
     size?: Responsive<"4" | "1" | "2" | "3" | "5" | "6" | "7" | "8" | "9"> | undefined
 }
 
 /**
- * SubNav component is used to display the sub navigation of the application.
- * It is dynamically generated based on {@link getSubNavItems}
+ * TopNav component is used to display the top navigation of the application.
+ * It is dynamically generated based on {@link getMainNavItems}
  */
-export default function SubNav({isActive, parent, size}: SubNavProps) {
-    const subItems = getSubNavItems(parent);
+export default function TopNav({isActive, size}: TopNavProps) {
+    const mainItems = getMainNavItems();
     return (
         <TabNav.Root>
             {
-                subItems.map((item) => {
+                mainItems.map((item) => {
                     return (
                         <TabNav.Link key={item.page} asChild active={isActive(item.page)}>
                             <Link href={item.page}>
