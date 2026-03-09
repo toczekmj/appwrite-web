@@ -1,79 +1,50 @@
-import { FrequencyData } from "@/components/Dashboard/Charts/FrequencyChart";
-import { Files, Genres } from "@/Generated/appwrite";
 import { GetCsvFileContent } from "@/lib/Bucket/bucket";
-import { GetFile, GetFiles } from "@/lib/Database/Services/FileService";
+import { GetFiles } from "@/lib/Database/Services/FileService";
 import { GetFolders } from "@/lib/Database/Services/FolderService";
-import { useEffect, useState } from "react";
+import { queryKeys } from "@/lib/TanStack/queryKeys";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 export function useChartContext() {
-    const [folders, setFolders] = useState<Genres[] | null>(null);
-    const [files, setFiles] = useState<Files[] | null>(null);
-    const [csvData, setCsvData] = useState<FrequencyData[] | null>();
-    const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [csvCache, setCsvCache] = useState<Record<string, FrequencyData[]>>({});
- 
     const [selectedFolderId, setSelectedFolderId] = useState<string>("");
     const [selectedFileId, setSelectedFileId] = useState<string>("");
 
-    useEffect(() => {tryLoad(getFolders, "Failed to fetch folders.")}, [])
-    useEffect(() => {tryLoad(getFiles, "Failed to fetch files.")}, [selectedFolderId])
-    useEffect(() => {tryLoad(getDataFromBucket, "Failed to fetch files.")}, [selectedFileId])
+    const folderQuery = useQuery({
+        queryKey: queryKeys.folders,
+        queryFn: () => GetFolders(),
+    });
 
-    async function getFolders() {
-        const folders = await GetFolders();
-        setFolders(folders);
-    }
+    const filesQuery = useQuery({
+        queryKey: queryKeys.files(selectedFolderId),
+        queryFn: () => GetFiles(selectedFolderId),
+        enabled: !!selectedFolderId,
+    });
 
-    async function getFiles() {
-        if (!selectedFolderId) return;
-        const files = await GetFiles(selectedFolderId);
-        setFiles(files);
-    }
+    const files = filesQuery.data ?? null;
+    const csvFileId = files?.find(file => file.$id === selectedFileId)?.data_file_id ?? null;
 
-    async function getDataFromBucket() {
-        if (!selectedFileId) return;
+    const csvQuery = useQuery({
+        queryKey: queryKeys.csvContent(selectedFileId),
+        // REMARK: queryFn intentionally uses csvFileId to fetch data from bucket, not selectedFileId
+        // this is because selectedFileId is the id of the file in the database,
+        // while csvFileId is the id of the file in the bucket (selectedFile has data_file_id field)
+        queryFn: () => GetCsvFileContent(csvFileId),
+        enabled: !!csvFileId && !!selectedFileId,
+    });
 
-        // 1. check cache
-        const cached = csvCache[selectedFileId];
-        if (cached) {
-            console.log("there was a cache for this file");
-            setCsvData(cached);
-            return;
-        }
+    const folders = folderQuery.data ?? null;
+    const csvData = csvQuery.data ?? null;
+    const loading = 
+        folderQuery.isPending ||
+        (!!selectedFolderId && filesQuery.isPending) ||
+        (!!selectedFileId && !!csvFileId && csvQuery.isPending);
+    const error = folderQuery.error?.message ??
+        filesQuery.error?.message ?? 
+        csvQuery.error?.message ?? null;
 
-        // 2. fetch from backend
-        const csvid = files
-            ?.find(file => file.$id === selectedFileId)
-            ?.data_file_id;
-
-        if (!csvid) return;
-
-        const csv = await GetCsvFileContent(csvid);
-
-        // 3. set cache
-        setCsvCache(prev => ({...prev, [selectedFileId]: csv}))
-        setCsvData(csv);
-    }
-
-    async function tryLoad(func: () => Promise<void>, errorMsg?: string) {
-        setError(null);
-        setLoading(true);
-        try {
-            await func();
-            setError(null);
-        }
-        catch (err: any){
-            setError(err.message || errorMsg)
-        }
-        finally {
-            setLoading(false);
-        }
-    }
 
     return {
         csvData,
-        setCsvData,
         selectedFileId,
         setSelectedFileId,
         selectedFolderId,
@@ -82,9 +53,5 @@ export function useChartContext() {
         files,
         error,
         loading,
-        getFolders,
-        GetFile,
-        getDataFromBucket,
-        tryLoad,
     }
 }

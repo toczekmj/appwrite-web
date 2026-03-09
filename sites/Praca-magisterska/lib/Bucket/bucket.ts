@@ -78,7 +78,9 @@ export async function GetFileContentAsText(fileId: string): Promise<string> {
     }
 }
 
-export async function GetCsvFileContent(fileId: string): Promise<{ freq: number; mag: number }[]> {
+export async function GetCsvFileContent(fileId: string | null): Promise<{ freq: number; mag: number }[]> {
+    if (!fileId)
+        throw new Error("File ID is required to fetch CSV file content");
     const text = await GetFileContentAsText(fileId);
     const dict: { freq: number; mag: number }[] = text
         .trim()
