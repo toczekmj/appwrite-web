@@ -14,6 +14,10 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import appCss from '../styles.css?url'
 
 import type { QueryClient } from '@tanstack/react-query'
+import { AuthProvider } from '#/components/auth/AuthContext'
+import { Container, Theme } from '@radix-ui/themes'
+import { Sidebar } from 'lucide-react'
+import { Navbar } from '#/components/dashboard/Navigation/Navbar'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -52,9 +56,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body className="font-sans antialiased [overflow-wrap:anywhere] selection:bg-[rgba(79,184,178,0.24)]">
+      <body className="font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]">
         <TanStackQueryProvider>
-          {children}
+          <Theme accentColor="jade"
+            appearance="dark"
+            grayColor="slate"
+            radius="medium"
+            scaling="95%">
+            <AuthProvider>
+              <Navbar />
+              <Container>
+                <div className="h-full flex flex-col items-center">
+                  <Sidebar />
+                  <div className="flex flex-col w-full">
+                    {children}
+                  </div>
+                </div>
+              </Container>
+            </AuthProvider>
+          </Theme>
           <TanStackDevtools
             config={{
               position: 'bottom-right',

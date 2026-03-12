@@ -1,14 +1,14 @@
 import Protected from '#/components/auth/Protected'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute('/dashboard/charts')({
+  component: RouteComponent,
+})
 
-function App() {
+function RouteComponent() {
   return (
     <Protected>
-      <main>
-        <h1>ShazaML</h1>
-      </main>
+      <p>Charts</p>
     </Protected>
   )
 }
