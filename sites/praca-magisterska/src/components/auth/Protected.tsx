@@ -1,4 +1,4 @@
-import React, {useEffect} from "react";
+import React, { useEffect } from 'react'
 import {useAuth} from "#/components/auth/AuthContext";
 import {useRouter} from "@tanstack/react-router";
 

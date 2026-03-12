@@ -1,5 +1,3 @@
-'use client'
-
 import FolderButton from "#/components/files/FolderBrowser/FolderButton";
 import {Button, Card, Separator, Text} from "@radix-ui/themes";
 import {FolderUpdateEvent} from "#/enums/FolderUpdateEvent";

@@ -1,5 +1,3 @@
-'use client'
-
 import type { Files, Genres } from "#/generated/appwrite";
 import { Select } from "@radix-ui/themes";
 import type { Dispatch, SetStateAction } from "react";

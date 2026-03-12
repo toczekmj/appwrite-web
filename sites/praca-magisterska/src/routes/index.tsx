@@ -1,14 +1,15 @@
-import Protected from '#/components/auth/Protected'
+import { requireAuth } from '#/lib/auth/routeAuth'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute('/')({
+  beforeLoad: () => requireAuth(),
+  component: App,
+})
 
 function App() {
   return (
-    <Protected>
-      <main>
-        <h1>ShazaML</h1>
-      </main>
-    </Protected>
+    <main>
+      <h1>ShazaML</h1>
+    </main>
   )
 }

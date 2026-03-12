@@ -1,5 +1,3 @@
-'use client'
-
 import useAuthContext, { type AuthContextType } from "#/codeBehind/components/Auth/useAuthContext";
 import React, {createContext, useContext} from "react";
 

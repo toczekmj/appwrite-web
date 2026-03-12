@@ -1,5 +1,3 @@
-'use client'
-
 import { Switch, Text } from "@radix-ui/themes";
 import { useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";

@@ -1,5 +1,3 @@
-'use client'
-
 import {useAuth} from "#/components/auth/AuthContext";
 import type { Models } from "appwrite";
 import React, {useEffect, useState} from "react";

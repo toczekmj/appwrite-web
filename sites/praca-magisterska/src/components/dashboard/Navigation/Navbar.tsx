@@ -1,6 +1,4 @@
-'use client'
-
-import {useAuth} from "#/components/auth/AuthContext";
+import { useAuth } from "#/components/auth/AuthContext";
 import {Button, Flex, Section, Text} from "@radix-ui/themes";
 import { useRouter } from '@tanstack/react-router';
 

@@ -1,5 +1,3 @@
-'use client'
-
 import {Card, Text} from "@radix-ui/themes";
 import Model from "#/components/dashboard/Home/Models/Model";
 

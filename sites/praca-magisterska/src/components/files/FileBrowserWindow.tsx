@@ -1,5 +1,3 @@
-'use client'
-
 import {Card} from "@radix-ui/themes";
 import FolderBrowser from "#/components/files/FolderBrowser/FolderBrowser";
 import FileBrowser from "#/components/files/FileBrowser/FileBrowser";
