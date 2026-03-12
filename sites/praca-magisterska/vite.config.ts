@@ -8,6 +8,9 @@ import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 const config = defineConfig({
+  optimizeDeps: {
+    include: ["use-sync-external-store", "use-sync-external-store/shim/with-selector"],
+  },
   plugins: [
     devtools(),
     tsconfigPaths({ projects: ['./tsconfig.json'] }),

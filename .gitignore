@@ -5,6 +5,7 @@ sites/Praca-magisterska/node_modules/*
 sites/Praca-magisterska/.next
 /.pnp
 .pnp.*
+.pnpm-store/*
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -40,3 +41,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.pnpm-store/v10/files/00/5cd627f158ad9f64cf2c7d4a48f7f79bdf4c4a9c70fe3feda552b57387155c2dcfb3dc5a6081849ddf41129cd030abe8893139f0fa22c4e9ea4b128d5f3a47

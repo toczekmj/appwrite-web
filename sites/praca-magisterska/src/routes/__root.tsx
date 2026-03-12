@@ -16,7 +16,7 @@ import appCss from '../styles.css?url'
 import type { QueryClient } from '@tanstack/react-query'
 import { AuthProvider } from '#/components/auth/AuthContext'
 import { Container, Theme } from '@radix-ui/themes'
-import { Sidebar } from 'lucide-react'
+import Sidebar from '#/components/dashboard/Navigation/SideBar'
 import { Navbar } from '#/components/dashboard/Navigation/Navbar'
 
 interface MyRouterContext {
@@ -56,38 +56,38 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <HeadContent />
       </head>
-      <body className="font-sans antialiased wrap-anywhere selection:bg-[rgba(79,184,178,0.24)]">
-        <TanStackQueryProvider>
-          <Theme accentColor="jade"
-            appearance="dark"
-            grayColor="slate"
-            radius="medium"
-            scaling="95%">
-            <AuthProvider>
-              <Navbar />
-              <Container>
-                <div className="h-full flex flex-col items-center">
-                  <Sidebar />
-                  <div className="flex flex-col w-full">
+      <body>
+        <Theme accentColor="jade"
+          appearance="dark"
+          grayColor="slate"
+          radius="medium"
+          scaling="95%">
+          <AuthProvider>
+            <Navbar />
+            <Container>
+              <div className="h-full flex flex-col items-center">
+                <Sidebar />
+                <div className="flex flex-col w-full">
+                  <TanStackQueryProvider>
                     {children}
-                  </div>
+                  </TanStackQueryProvider>
                 </div>
-              </Container>
-            </AuthProvider>
-          </Theme>
-          <TanStackDevtools
-            config={{
-              position: 'bottom-right',
-            }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
-        </TanStackQueryProvider>
+              </div>
+            </Container>
+          </AuthProvider>
+        </Theme>
+        <TanStackDevtools
+          config={{
+            position: 'bottom-right',
+          }}
+          plugins={[
+            {
+              name: 'Tanstack Router',
+              render: <TanStackRouterDevtoolsPanel />,
+            },
+            TanStackQueryDevtools,
+          ]}
+        />
         <Scripts />
       </body>
     </html>

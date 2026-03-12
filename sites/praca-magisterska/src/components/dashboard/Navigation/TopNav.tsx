@@ -14,18 +14,15 @@ interface TopNavProps {
  * TopNav component is used to display the top navigation of the application.
  * It is dynamically generated based on {@link getMainNavItems}
  */
-export default function TopNav({isActive, size, hrefOverrides}: TopNavProps) {
+export default function TopNav({isActive, size}: TopNavProps) {
     const mainItems = getMainNavItems();
-
     return (
         <TabNav.Root>
             {
                 mainItems.map((item) => {
-                    console.log("Item.page", item.page);
-                    console.log("hrefOverrides?.[item.page]", hrefOverrides?.[item.page]);
                     return (
                         <TabNav.Link key={item.page} asChild active={isActive(item.page)}>
-                            <Link to={hrefOverrides?.[item.page] ?? item.page as any}>
+                            <Link to={item.page as any}>
                                 <Text size={size ?? "1"}>{item.label}</Text>
                             </Link>
                         </TabNav.Link>
