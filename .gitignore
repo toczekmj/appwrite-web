@@ -5,6 +5,7 @@ sites/Praca-magisterska/node_modules/*
 sites/Praca-magisterska/.next
 /.pnp
 .pnp.*
+.pnpm-store/*
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -40,3 +41,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+sites/praca-magisterska/src/routeTree.gen.ts
