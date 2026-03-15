@@ -23,28 +23,28 @@ const NEW_LINES = `: T extends QueryValue | null
       : never;`;
 
 function main() {
-  const fullPath = path.resolve(TYPES_PATH);
-  if (!fs.existsSync(fullPath)) {
-    console.error('patch-appwrite-types: types.ts not found at', fullPath);
-    process.exit(1);
-  }
+	const fullPath = path.resolve(TYPES_PATH);
+	if (!fs.existsSync(fullPath)) {
+		console.error('patch-appwrite-types: types.ts not found at', fullPath);
+		process.exit(1);
+	}
 
-  let content = fs.readFileSync(fullPath, 'utf8');
+	let content = fs.readFileSync(fullPath, 'utf8');
 
-  if (content.includes('T extends any') && content.includes('T extends object')) {
-    console.log('patch-appwrite-types: types.ts already patched, skipping');
-    return;
-  }
+	if (content.includes('T extends any') && content.includes('T extends object')) {
+		console.log('patch-appwrite-types: types.ts already patched, skipping');
+		return;
+	}
 
-  if (!OLD_PATTERN.test(content)) {
-    console.error('patch-appwrite-types: Could not find ExtractQueryValue pattern to patch.');
-    console.error('The Appwrite generator may have changed. Manual patch may be needed.');
-    process.exit(1);
-  }
+	if (!OLD_PATTERN.test(content)) {
+		console.error('patch-appwrite-types: Could not find ExtractQueryValue pattern to patch.');
+		console.error('The Appwrite generator may have changed. Manual patch may be needed.');
+		process.exit(1);
+	}
 
-  content = content.replace(OLD_PATTERN, NEW_LINES);
-  fs.writeFileSync(fullPath, content);
-  console.log('patch-appwrite-types: Successfully patched types.ts');
+	content = content.replace(OLD_PATTERN, NEW_LINES);
+	fs.writeFileSync(fullPath, content);
+	console.log('patch-appwrite-types: Successfully patched types.ts');
 }
 
 main();

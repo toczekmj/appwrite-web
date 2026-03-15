@@ -9,71 +9,71 @@ import { defaultFileCache } from "#/lib/cache/InMemoryFileCache";
 const database = databases.use(DATABASE).use('files');
 
 export async function GetFile(fileId: string, fileCache: ICache<string, Files> = defaultFileCache) {
-    const cachedFile = fileCache.getSingleItem(fileId);
+	const cachedFile = fileCache.getSingleItem(fileId);
 
-    if (cachedFile) {
-        return cachedFile;
-    }
+	if (cachedFile) {
+		return cachedFile;
+	}
 
-    const response = await database.list({
-        queries:(q) => [q.equal("$id", fileId)]
-    });
+	const response = await database.list({
+		queries: (q) => [q.equal("$id", fileId)]
+	});
 
-    if (response.rows.length > 1) {
-        throw new Error("Error - there is more than 1 file with given id");
-    }
+	if (response.rows.length > 1) {
+		throw new Error("Error - there is more than 1 file with given id");
+	}
 
-    fileCache.addSingleItem(response.rows[0]);
-    return response.rows[0];
+	fileCache.addSingleItem(response.rows[0]);
+	return response.rows[0];
 }
 
 export async function GetFiles(folderId: string, fileCache: ICache<string, Files> = defaultFileCache) {
-    const cachedFiles = fileCache.get(folderId);
-    if (cachedFiles) {
-        return cachedFiles;
-    }
+	const cachedFiles = fileCache.get(folderId);
+	if (cachedFiles) {
+		return cachedFiles;
+	}
 
-    const response = await database.list({
-        queries: (q) => [q.equal('genre', folderId)]
-    });
+	const response = await database.list({
+		queries: (q) => [q.equal('genre', folderId)]
+	});
 
-    fileCache.add(response.rows);
-    return response.rows;
+	fileCache.add(response.rows);
+	return response.rows;
 }
 
-export async function LinkFile(folderId: string, fileId: string, fileName: string, userId: string, fileCache:ICache<string, Files> = defaultFileCache) {
-    const data = {
-        "FileId": fileId,
-        "FileName": fileName,
-        "genre": folderId,
-    };
+export async function LinkFile(folderId: string, fileId: string, fileName: string, userId: string, fileCache: ICache<string, Files> = defaultFileCache) {
+	const data = {
+		"FileId": fileId,
+		"FileName": fileName,
+		"genre": folderId,
+	};
 
-    const createdFile = await database.create(data, {
-        permissions: (permission, role) => [
-            permission.write(role.user(userId)),
-            permission.read(role.user(userId)),
-            permission.update(role.user(userId)),
-            permission.delete(role.user(userId))
-        ]
-    })
+	const createdFile = await database.create(data, {
+		permissions: (permission, role) => [
+			permission.write(role.user(userId)),
+			permission.read(role.user(userId)),
+			permission.update(role.user(userId)),
+			permission.delete(role.user(userId))
+		]
+	})
 
-    fileCache.addSingleItem(createdFile);
-    return createdFile;
+	fileCache.addSingleItem(createdFile);
+	return createdFile;
 }
 
-export async function DeleteFile(fileId: string, fileCache:ICache<string, Files> = defaultFileCache) {
-    const file = await GetFile(fileId, fileCache);
-    const hasCsvData = file.data_file_id;
-    const hasFile = file.FileId;
+export async function DeleteFile(fileId: string, fileCache: ICache<string, Files> = defaultFileCache) {
+	const file = await GetFile(fileId, fileCache);
+	const hasCsvData = file.data_file_id;
+	const hasFile = file.FileId;
 
-    if (hasCsvData) {
-        await DeleteFileFromBucket(file.data_file_id!)
-    }
+	if (hasCsvData) {
+		await DeleteFileFromBucket(file.data_file_id!)
+	}
 
-    if (hasFile) {
-        await DeleteFileFromBucket(file.FileId)
-    }
+	if (hasFile) {
+		await DeleteFileFromBucket(file.FileId)
+	}
 
-    await database.delete(fileId);
-    fileCache.delete(fileId);
+	await database.delete(fileId);
+	fileCache.delete(fileId);
 }

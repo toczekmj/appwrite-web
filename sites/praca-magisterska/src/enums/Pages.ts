@@ -5,11 +5,11 @@
  * The parent pages are used to display the pages in the sidebar and navbar.
  */
 export enum Pages {
-    "dashboard" = "/dashboard",
-    "settings" = "/settings",
-    "files" = "/dashboard/files",
-    "charts" = "/dashboard/charts",
-    "login" = "/login",
+	"dashboard" = "/dashboard",
+	"settings" = "/settings",
+	"files" = "/dashboard/files",
+	"charts" = "/dashboard/charts",
+	"login" = "/login",
 }
 
 /**
@@ -19,18 +19,18 @@ export enum Pages {
  * The parent items are used to display the items in the sidebar and navbar.
  */
 export const NAV_ITEMS: Array<{
-    page: Pages;
-    label: string;
-    parent?: Pages; // undefined = top-level (MainNav)
+	page: Pages;
+	label: string;
+	parent?: Pages; // undefined = top-level (MainNav)
 }> = [
-    // dashboard
-    {page: Pages.dashboard, label: "Dashboard"},
-        {page: Pages.dashboard, label: "Models", parent: Pages.dashboard},
-        {page: Pages.files, label: "File management", parent: Pages.dashboard},
-        {page: Pages.charts, label: "Charts", parent: Pages.dashboard},
-    // settings
-    {page: Pages.settings, label: "Settings"},
-]
+		// dashboard
+		{ page: Pages.dashboard, label: "Dashboard" },
+		{ page: Pages.dashboard, label: "Models", parent: Pages.dashboard },
+		{ page: Pages.files, label: "File management", parent: Pages.dashboard },
+		{ page: Pages.charts, label: "Charts", parent: Pages.dashboard },
+		// settings
+		{ page: Pages.settings, label: "Settings" },
+	]
 
 
 /**

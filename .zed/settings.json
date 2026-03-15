@@ -1,0 +1,7 @@
+{
+	"prettier": {
+		"allowed": false,
+	},
+	"hard_tabs": true,
+	"tab_size": 4,
+}
